@@ -383,7 +383,7 @@ class RiemannProblem:
         t0 = 0
         p = np.linspace(0, 10, 100)
 
-        plt.figure()
+        plt.figure(figsize=(4, 2.75))
 
         # contact wave
         alpha = np.arctan2(1 , self.uStar)
@@ -424,9 +424,9 @@ class RiemannProblem:
                     plt.plot(xt, yt, 'C1', lw=0.75)
 
         # plt.gca().set_aspect('equal', adjustable='box')
-        plt.legend()
-        plt.xlabel(r'$x \ \rm{[-]}$')
-        plt.ylabel(r'$t \ \rm{[-]}$')
+        # plt.legend()
+        plt.xlabel(r'$x$')
+        plt.ylabel(r'$t$')
         # plt.xticks([])
         # plt.yticks([])
         plt.grid(alpha=0.3)

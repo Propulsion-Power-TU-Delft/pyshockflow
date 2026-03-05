@@ -45,6 +45,7 @@ medium_line_width = 2
 light_line_width = 0.5
 
 # set number of levels in contourf plots
+N_levels_coarse = 15
 N_levels = 35
 N_levels_medium = 70
 N_levels_fine = 100
