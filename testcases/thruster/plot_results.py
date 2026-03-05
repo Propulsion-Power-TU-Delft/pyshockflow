@@ -3,11 +3,12 @@ import matplotlib.pyplot as plt
 import pickle
 from pyshockflow.plot_styles import *
 
-points = [100] 
+points = [500] 
 inputFiles = ['Results/rocket_NX_%i/Results.pik' %(_) for _ in points]
+figsize=(4.5,3.5)
 
 # # OPENING TRANSIENT PRESSURE DISTRIBUTION
-plt.figure()
+plt.figure(figsize=figsize)
 for ii, inputFile in enumerate(inputFiles):
     with open(inputFile, 'rb') as file:
         result = pickle.load(file)
@@ -24,7 +25,7 @@ plt.ylabel(r'$p \ \rm{[bar]}$')
 plt.grid(alpha=.3)
 
 # PRESSURE SENSORS IN TIME
-plt.figure()
+plt.figure(figsize=figsize)
 for ii, inputFile in enumerate(inputFiles):
     with open(inputFile, 'rb') as file:
         result = pickle.load(file)
@@ -40,7 +41,7 @@ plt.grid(alpha=.3)
 plt.savefig('Pictures/sensor_pressure_rocket.pdf', bbox_inches='tight')
 
 # MACH NUMBER AT NOZZLE THROAT AND EXIT IN TIME
-plt.figure()
+plt.figure(figsize=figsize)
 for ii, inputFile in enumerate(inputFiles):
     with open(inputFile, 'rb') as file:
         result = pickle.load(file)
@@ -50,12 +51,12 @@ for ii, inputFile in enumerate(inputFiles):
     plt.plot(result['Time']*1e3, mach[-2,:], label='Exit')
 plt.legend()
 plt.xlabel(r'$t \ \rm{[ms]}$')
-plt.ylabel(r'$M \ \rm{[-]}$')
+plt.ylabel(r'$M$')
 plt.grid(alpha=.3)
 plt.savefig('Pictures/nozzle_mach_rocket.pdf', bbox_inches='tight')
 
 # MASS FLOW RATE EXIT
-plt.figure()
+plt.figure(figsize=figsize)
 for ii, inputFile in enumerate(inputFiles):
     with open(inputFile, 'rb') as file:
         result = pickle.load(file)
@@ -75,7 +76,7 @@ plt.grid(alpha=.3)
 plt.savefig('Pictures/massflow_rocket.pdf', bbox_inches='tight')
 
 # THRUST EXIT
-plt.figure()
+plt.figure(figsize=figsize)
 for ii, inputFile in enumerate(inputFiles):
     with open(inputFile, 'rb') as file:
         result = pickle.load(file)

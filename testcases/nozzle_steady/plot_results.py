@@ -8,11 +8,7 @@ pressureList = [45, 75, 90, 94, 97]
 pickleList = ['Results/outletPressure_%ikPa_NX_200/Results.pik' %pressure for pressure in pressureList]
 
 
-fig1, ax1 = plt.subplots()
-fig2, ax2 = plt.subplots()
-fig3, ax3 = plt.subplots()
-fig4, ax4 = plt.subplots()
-fig5, ax5 = plt.subplots()
+fig, axes = plt.subplots(1, 2, figsize=(9, 4))
 
 for i, pickleFile in enumerate(pickleList):
     with open(pickleFile, 'rb') as file:
@@ -34,7 +30,7 @@ for i, pickleFile in enumerate(pickleList):
             else:
                 machTheory[iPoint] = fsolve(machFunction, 1.2, args=(areaRatio[iPoint], gammaFluid))[0]
 
-        ax1.plot(xArea[::10], machTheory[::10], 'ko', mfc='none' ,label=r'Supersonic reference')
+        axes[0].plot(xArea[::10], machTheory[::10], 'ko', mfc='none' ,label=r'Supersonic reference')
         
     xCoords = solution['X Coords'][1:-1]
     density = solution['Primitive']["Density"][1:-1,-1]
@@ -47,32 +43,19 @@ for i, pickleFile in enumerate(pickleList):
     totalTemperature = solution['Fluid'].computeTotalTemperature_T_M(temperature, mach)
     
     
-    ax1.plot(xCoords, mach, label=r'$p_{out}=%i$ kPa' %(pressureList[i]))
-    ax1.set_ylabel(r'Mach [-]')
+    axes[0].plot(xCoords, mach, label=r'$p_{\rm out}=%i$ kPa' %(pressureList[i]))
+    axes[0].set_ylabel(r'$M$')
     
-    ax2.plot(xCoords, pressure/1e3, label=r'$p_{out}=%i$ kPa' %(pressureList[i]))
-    ax2.set_ylabel(r'Pressure [kPa]')
+    axes[1].plot(xCoords, pressure/1e3)
+    axes[1].set_ylabel(r'$p$ [kPa]')
     
-    ax3.plot(xCoords, entropy/1e3, label=r'$p_{out}=%i$ kPa' %(pressureList[i]))
-    ax3.set_ylabel(r'Entropy [kJ/kgK]')
-    
-    ax4.plot(xCoords, totalPressure/1e3, label=r'$p_{out}=%i$ kPa' %(pressureList[i]))
-    ax4.set_ylabel(r'Total Pressure [kPa]')
-    
-    ax5.plot(xCoords, totalTemperature, label=r'$p_{out}=%i$ kPa' %(pressureList[i]))
-    ax5.set_ylabel(r'Total Temperature [K]')
-    
-    for ax in [ax1, ax2, ax3, ax4, ax5]:
-        ax.set_xlabel(r'$x$ [-]')
-        ax.legend()
+    for ax in axes:
+        ax.set_xlabel(r'$x$')
         ax.grid(alpha=.3)
 
-
-
-
-
-fig1.savefig('Pictures/mach.pdf', bbox_inches='tight')
-fig2.savefig('Pictures/pressure.pdf', bbox_inches='tight')
+fig.legend(loc='upper center', bbox_to_anchor=(0.55, 1.18), ncol=3)
+plt.tight_layout()
+plt.savefig('Pictures/mach_pressure_ideal_nozzle.pdf', bbox_inches='tight')
     
 plt.show()
         
