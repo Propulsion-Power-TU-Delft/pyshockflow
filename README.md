@@ -42,8 +42,7 @@ python main.py
 
 
 ### Notes ###
-* The code has been written for Mac OS systems, so there is the chance for some path-related commands to not run correctly
-on windows based machines. It should be quite easy to fix. With time the code will be made more universal.
+* The code should be compatible with Mac OS, Windows and Linux systems.
 
 * The technical details can be found in the related article ... (soon to be submitted)
 
