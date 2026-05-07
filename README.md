@@ -24,7 +24,7 @@ conda activate pyshockflow
 
 * Install the packages:
 ```bash
-python -m pip install -e .
+pip install -e .
 ```
 
 * Navigate to the regression tests folder and run the automated tests:
