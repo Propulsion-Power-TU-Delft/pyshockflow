@@ -34,29 +34,24 @@ class Output():
                 result = pickle.load(file)
                 
                 if iFile == 0:
-                    nNodesVirtual = result['Primitive']['Pressure'].shape[0]
-                    self.xNodesVirtual = result['X Coords']
-                    self.area = result['Area Tube']
+                    self.xNodes = result['X Coords'][1:-1]
+                    nNodes = len(self.xNodes)
+                    self.area = result['Area Tube'][1:-1]
                     self.iterationCounter = result['Iteration Counter']
-                    self.fluid = result['Fluid']
-                    self.config = result['Configuration']
-                    
                     self.timeVec = np.zeros(nTimes)
-                    self.solution['Density'] = np.zeros((nNodesVirtual, nTimes))
-                    self.solution['Velocity'] = np.zeros((nNodesVirtual, nTimes))
-                    self.solution['Pressure'] = np.zeros((nNodesVirtual, nTimes))
+                    self.solution['Density'] = np.zeros((nNodes, nTimes))
+                    self.solution['Velocity'] = np.zeros((nNodes, nTimes))
+                    self.solution['Pressure'] = np.zeros((nNodes, nTimes))
                 
                 self.timeVec[iFile] = result['Time']
-                self.solution['Density'][:, iFile] = result['Primitive']['Density']
-                self.solution['Velocity'][:, iFile] = result['Primitive']['Velocity']
-                self.solution['Pressure'][:, iFile] = result['Primitive']['Pressure']
+                self.solution['Density'][:, iFile] = result['Primitive']['Density'][1:-1]
+                self.solution['Velocity'][:, iFile] = result['Primitive']['Velocity'][1:-1]
+                self.solution['Pressure'][:, iFile] = result['Primitive']['Pressure'][1:-1]
         
-        globalOutput = {'X Coords': self.xNodesVirtual, 
+        globalOutput = {'X Coords': self.xNodes, 
                         'Area': self.area,
                         'Time': self.timeVec, 
-                        'Primitive': self.solution, 
-                        'Fluid': self.fluid, 
-                        'Configuration': self.config}
+                        'Solution': self.solution}
         
         print("Replacing all individual files with a single pickle (this could take a while) ...")
         shutil.rmtree(filepath)
