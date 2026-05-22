@@ -51,7 +51,7 @@ class Output():
         globalOutput = {'X Coords': self.xNodes, 
                         'Area': self.area,
                         'Time': self.timeVec, 
-                        'Solution': self.solution}
+                        'Primitive': self.solution}
         
         print("Replacing all individual files with a single pickle (this could take a while) ...")
         shutil.rmtree(filepath)
