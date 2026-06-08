@@ -29,8 +29,8 @@ sols = [
     sol3, 
     ]
 labels = [
-    'Ideal Roe Standard', 
-    'Real Roe Arabi', 
+    'Standard Roe', 
+    'Generalized Roe', 
     ]
 
 fig, ax = plt.subplots(1, 3, figsize=(10, 3.5))
