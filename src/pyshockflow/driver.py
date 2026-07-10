@@ -27,6 +27,8 @@ class Driver:
         """
         self.config = config
         self.topology = self.config.getTopology()
+        self.isWallFrictionActive = self.config.isWallFrictionActive()
+        self.frictionCoefficient = self.config.getFrictionCoefficient()
         self.fluidName = self.config.getFluidName()
         self.fluidModel = self.config.getFluidModel()
         
@@ -585,11 +587,7 @@ class Driver:
         for iFace in range(flux.shape[0]):
             flux[iFace, :] = self.computeFluxVector(iFace, iFace+1, primitives, dt, advectionScheme, MUSCL, limiter)
         
-        # compute the source terms
-        if self.topology.lower()=='nozzle':
-            source = self.computeSourceTerms(primitives)
-        else:
-            source = np.zeros((self.nNodesHalo,3))
+        source = self.computeSourceTerms(primitives)
         
         # assemble the full residual vector on every physical node
         residuals = np.zeros((self.nNodes,3))
@@ -642,22 +640,42 @@ class Driver:
         timeProgress = time/self.timeMax * 100
         print('Iteration %i    Progress in Time %.3f%%    Residuals: %.6f, %.6f, %.6f' %(iTime, timeProgress, res[0], res[1], res[2]))
     
-    
     def computeSourceTerms(self, primitive):
+        """compute global volumetric source terms (per unit volume)
+        """
+        source = np.zeros((self.nNodesHalo,3))
+        
+        # compute the source terms if needed
+
+        if self.topology.lower()=='nozzle':
+            source += self.computeGeometricalSourceTerms(primitive)
+        
+        if self.isWallFrictionActive:
+            source += self.computeFrictionSourceTerms(primitive)
+            
+        return source
+    
+    def computeGeometricalSourceTerms(self, primitive):
         """compute source terms related to area variations along the tube due to a nozzle. Source terms taken from 'On the numerical simulation
         of non-classical quasi-1D steady nozzle flows: Capturing sonic shocks' by Vimercati and Guardone.
-
-        Args:
-            it (int): time step index
-
-        Returns:
-            np.ndarray: source terms arrays (nPoints, 3)
         """
         totalEnergy = primitive['Energy'][:] + 0.5*primitive['Velocity']**2
         source = np.zeros((self.nNodesHalo,3))
         source[:,0] = - primitive['Density'] * primitive['Velocity']*self.dAreaTude_dx/self.areaTube
         source[:,1] = - (primitive['Density'] * primitive['Velocity']**2)*self.dAreaTude_dx/self.areaTube
         source[:,2] = - primitive['Velocity'] *(primitive['Density']*totalEnergy + primitive['Pressure'])*self.dAreaTude_dx/self.areaTube
+        return source
+    
+    def computeFrictionSourceTerms(self, primitive):
+        """compute source terms related to friction along the walls
+        """
+        frictionCoefficient = self.frictionCoefficient 
+        hydraulicDiameter = 4*self.areaTube/(np.pi*np.sqrt(self.areaTube/np.pi)*2)
+        Sm = -2.0 * frictionCoefficient * primitive['Density'] * primitive['Velocity'] * np.abs(primitive['Velocity']) / hydraulicDiameter
+        
+        source = np.zeros((self.nNodesHalo,3))
+        source[:,1] = Sm
+        source[:,2] = Sm * primitive['Velocity']
         return source
     
     

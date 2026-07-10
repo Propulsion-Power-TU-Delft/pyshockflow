@@ -181,6 +181,22 @@ class Config:
         except:
             return 'default' 
     
+    def getFrictionCoefficient(self):
+        try:
+            return float(self.config_parser.get('SIMULATION', 'FRICTION_COEFFICIENT'))
+        except:
+            return 0.003 # default value
+        
+    def isWallFrictionActive(self):
+        try:
+            res = str(self.config_parser.get('SIMULATION', 'WALL_FRICTION_ACTIVE')).lower()
+            if res=='yes' or res=='true':
+                return True
+            else:
+                return False
+        except:
+            return False 
+    
     def getNozzleFilePath(self):
         return str(self.config_parser.get('GEOMETRY', 'NOZZLE_FILEPATH'))
     
