@@ -4,28 +4,11 @@ import pickle
 from pyshockflow.fluid import FluidIdeal
 from pyshockflow.plot_styles import *
 
-points = [100] 
+points = [500] 
 inputFiles = ['Results/rocket_NX_%i/Results.pik' %(_) for _ in points]
 figsize=(4.5,3.5)
 
 fluid = FluidIdeal(1.4, 287.05)
-
-# # OPENING TRANSIENT PRESSURE DISTRIBUTION
-plt.figure(figsize=figsize)
-for ii, inputFile in enumerate(inputFiles):
-    with open(inputFile, 'rb') as file:
-        result = pickle.load(file)
-    
-    time = result['Time']
-    nTimes = len(time)*0.00377/time[-1]
-    iTimes = np.linspace(0, nTimes-1, 10, dtype=int)
-    
-    for it in range(len(iTimes)):
-        plt.plot(result['X Coords'], result['Primitive']['Pressure'][:,iTimes[it]]/1e5, label='t/T=%.2f' %(iTimes[it]/iTimes[-1]))
-plt.legend()
-plt.xlabel(r'$x \ \rm{[m]}$')
-plt.ylabel(r'$p \ \rm{[bar]}$')
-plt.grid(alpha=.3)
 
 # PRESSURE SENSORS IN TIME
 plt.figure(figsize=figsize)
@@ -93,6 +76,7 @@ plt.xlabel(r'$t \ \rm{[ms]}$')
 plt.ylabel(r'$T \ \rm{[kN]}$')
 plt.legend()
 plt.grid(alpha=.3)
+plt.ylim(bottom=-10, top=200)
 plt.savefig('Pictures/thrust_rocket.pdf', bbox_inches='tight')
 
 

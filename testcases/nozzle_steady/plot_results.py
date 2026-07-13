@@ -6,7 +6,7 @@ from pyshockflow.plot_styles import *
 from scipy.optimize import fsolve
 
 pressureList = [45, 75, 90, 94, 97]
-pickleList = ['Results/outletPressure_%ikPa_NX_200/Results.pik' %pressure for pressure in pressureList]
+pickleList = ['Results/outletPressure_%ikPa_NX_100/Results.pik' %pressure for pressure in pressureList]
 fluid = FluidIdeal(1.4, 287.05)
 
 fig, axes = plt.subplots(1, 2, figsize=(9, 4))
