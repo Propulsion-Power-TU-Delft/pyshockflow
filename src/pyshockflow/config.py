@@ -197,6 +197,22 @@ class Config:
         except:
             return False 
     
+    def isWallHeatTransferActive(self):
+        try:
+            res = str(self.config_parser.get('SIMULATION', 'WALL_HEAT_TRANSFER_ACTIVE')).lower()
+            if res=='yes' or res=='true':
+                return True
+            else:
+                return False
+        except:
+            return False 
+    
+    def getWallHeatFlux(self):
+        try:
+            return float(self.config_parser.get('SIMULATION', 'WALL_HEAT_FLUX'))
+        except:
+            return 0.0 # default value
+
     def getNozzleFilePath(self):
         return str(self.config_parser.get('GEOMETRY', 'NOZZLE_FILEPATH'))
     

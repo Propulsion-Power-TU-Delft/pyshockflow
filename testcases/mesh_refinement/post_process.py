@@ -4,10 +4,13 @@ import pickle
 from pyshockflow import RiemannProblem
 from pyshockflow import Driver
 import os
+from pyshockflow.fluid import FluidIdeal
+
+fluid = FluidIdeal(1.4, 287.05)
 
 
 resultsFile = ["Results/normal_NX_500/Results.pik",
-               "Results/refined_NX_598/Results.pik"]
+               "Results/refined_NX_498/Results.pik"]
 
 labels = ['Normal', 'Local Refinement']
 
@@ -36,7 +39,7 @@ ax[1, 0].set_ylabel(r'Pressure')
 
 
 for i,results in enumerate(resultsPickle):
-    results['Primitive']["Mach"] = results['Fluid'].computeMach_u_p_rho(results['Primitive']["Velocity"], results['Primitive']["Pressure"], results['Primitive']["Density"])
+    results['Primitive']["Mach"] = fluid.computeMach_u_p_rho(results['Primitive']["Velocity"], results['Primitive']["Pressure"], results['Primitive']["Density"])
     ax[1,1].plot(results['X Coords'][1:-1], results['Primitive']["Mach"][1:-1, -1], label=labels[i])
 ax[1, 1].set_ylabel(r'Mach')
 

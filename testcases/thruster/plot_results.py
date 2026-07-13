@@ -1,11 +1,14 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle
+from pyshockflow.fluid import FluidIdeal
 from pyshockflow.plot_styles import *
 
-points = [500] 
+points = [100] 
 inputFiles = ['Results/rocket_NX_%i/Results.pik' %(_) for _ in points]
 figsize=(4.5,3.5)
+
+fluid = FluidIdeal(1.4, 287.05)
 
 # # OPENING TRANSIENT PRESSURE DISTRIBUTION
 plt.figure(figsize=figsize)
@@ -18,7 +21,7 @@ for ii, inputFile in enumerate(inputFiles):
     iTimes = np.linspace(0, nTimes-1, 10, dtype=int)
     
     for it in range(len(iTimes)):
-        plt.plot(result['X Coords'][1:-2], result['Primitive']['Pressure'][1:-2,iTimes[it]]/1e5, label='t/T=%.2f' %(iTimes[it]/iTimes[-1]))
+        plt.plot(result['X Coords'], result['Primitive']['Pressure'][:,iTimes[it]]/1e5, label='t/T=%.2f' %(iTimes[it]/iTimes[-1]))
 plt.legend()
 plt.xlabel(r'$x \ \rm{[m]}$')
 plt.ylabel(r'$p \ \rm{[bar]}$')
@@ -46,7 +49,7 @@ for ii, inputFile in enumerate(inputFiles):
     with open(inputFile, 'rb') as file:
         result = pickle.load(file)
     idxThroat = np.argmin(result['Area'])
-    mach = result['Fluid'].computeMach_u_p_rho(result['Primitive']['Velocity'], result['Primitive']['Pressure'], result['Primitive']['Density'])
+    mach = fluid.computeMach_u_p_rho(result['Primitive']['Velocity'], result['Primitive']['Pressure'], result['Primitive']['Density'])
     plt.plot(result['Time']*1e3, mach[idxThroat,:], label='Throat')
     plt.plot(result['Time']*1e3, mach[-2,:], label='Exit')
 plt.legend()

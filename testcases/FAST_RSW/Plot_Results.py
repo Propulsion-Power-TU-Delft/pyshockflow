@@ -8,17 +8,19 @@ from scipy.optimize import brentq
 
 # INPUT
 inputPkls = [
+                'Results/test_coolprop_NX_100/Results.pik',
                 'Results/test_coolprop_NX_250/Results.pik',
                 'Results/test_coolprop_NX_500/Results.pik',
                 'Results/test_coolprop_NX_1000/Results.pik',
             ]
 labels = [
+            '100',
             '250', 
             '500',
             '1000',
             ]
 
-linestyles = ['--', '-.', ':']
+linestyles = ['--', '-.', ':', '-']
 lw=2
 
 # analytical solution

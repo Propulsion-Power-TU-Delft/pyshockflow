@@ -9,8 +9,8 @@ testNumber = [1,3,5]
 markerSize = 4
 # ANALYTICAL SOLUTIONS
 analyticalResults = ['../analytical/solutions/Test%i.pik' % i for i in testNumber]
-godunovResults = ['../godunov/Results/Test%i_NX_250/Results.pik' % i for i in testNumber]
-roeResults = ['../roe/Results/Test%i_NX_250/Results.pik' % i for i in testNumber]
+godunovResults = ['../godunov/Results/Test%i_NX_100/Results.pik' % i for i in testNumber]
+roeResults = ['../roe/Results/Test%i_NX_100/Results.pik' % i for i in testNumber]
 lw=2
 
 figSize = (10, 3.5)

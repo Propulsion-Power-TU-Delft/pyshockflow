@@ -29,6 +29,9 @@ class Driver:
         self.topology = self.config.getTopology()
         self.isWallFrictionActive = self.config.isWallFrictionActive()
         self.frictionCoefficient = self.config.getFrictionCoefficient()
+        self.isWallHeatTransferActive = self.config.isWallHeatTransferActive()
+        self.wallHeatFlux = self.config.getWallHeatFlux()
+        
         self.fluidName = self.config.getFluidName()
         self.fluidModel = self.config.getFluidModel()
         
@@ -245,6 +248,19 @@ class Driver:
             raise ValueError('Unknown topology type')
         
         self.dAreaTude_dx = np.gradient(self.areaTube, self.xNodesVirtual)
+        self.dV = self.areaTube * self.dx
+        self.areaFluxes = self.computeAreaInterfaces()
+    
+    def computeAreaInterfaces(self):
+        """
+        Compute the area at the interfaces between the nodes, using a simple average. Consider Only the internal nodes
+        """
+        areaFluxes = np.zeros(self.nNodesHalo+1)
+        for i in range(1, len(areaFluxes)-1):
+            areaFluxes[i] = (self.areaTube[i-1]+self.areaTube[i])/2
+        areaFluxes[0] = self.areaTube[0]
+        areaFluxes[-1] = self.areaTube[-1]
+        return areaFluxes[1:-1]
         
         
     def instantiatePrimitiveArrays(self):
@@ -582,17 +598,18 @@ class Driver:
         advectionScheme = self.config.getNumericalScheme()
         MUSCL = self.config.isMusclActive()
         
-        # compute advection fluxes on every internal interface
+        # compute advection fluxes on every internal interface. Per unit area
         flux = np.zeros((self.nNodes+1, 3))
         for iFace in range(flux.shape[0]):
             flux[iFace, :] = self.computeFluxVector(iFace, iFace+1, primitives, dt, advectionScheme, MUSCL, limiter)
         
+        # compute volumetric source terms, per unit volume
         source = self.computeSourceTerms(primitives)
         
         # assemble the full residual vector on every physical node
         residuals = np.zeros((self.nNodes,3))
         for iDim in range(3):
-            residuals[:,iDim] = dt/self.dx[1:-1] * ((flux[0:-1, iDim] - flux[1:, iDim]) + source[1:-1, iDim]*self.dx[1:-1])
+            residuals[:,iDim] = dt/self.dV[1:-1] * ((flux[0:-1, iDim]*self.areaFluxes[0:-1] - flux[1:, iDim]*self.areaFluxes[1:]) + source[1:-1, iDim]*self.dV[1:-1])
         return residuals
 
     
@@ -641,7 +658,7 @@ class Driver:
         print('Iteration %i    Progress in Time %.3f%%    Residuals: %.6f, %.6f, %.6f' %(iTime, timeProgress, res[0], res[1], res[2]))
     
     def computeSourceTerms(self, primitive):
-        """compute global volumetric source terms (per unit volume)
+        """compute global volumetric source terms (per unit length)
         """
         source = np.zeros((self.nNodesHalo,3))
         
@@ -652,6 +669,9 @@ class Driver:
         
         if self.isWallFrictionActive:
             source += self.computeFrictionSourceTerms(primitive)
+        
+        if self.isWallHeatTransferActive:
+            source += self.computeHeatTransferSourceTerms(primitive)
             
         return source
     
@@ -675,7 +695,19 @@ class Driver:
         
         source = np.zeros((self.nNodesHalo,3))
         source[:,1] = Sm
-        source[:,2] = Sm * primitive['Velocity']
+        return source
+    
+    def computeHeatTransferSourceTerms(self, primitive):
+        """compute source term of energy eq. related to heat transfer along the walls.
+        Must be per unit length
+        """
+        radius = np.sqrt(self.areaTube/np.pi)
+        transferArea = np.pi*radius*2 * self.dx
+        heatTransfer = transferArea * self.wallHeatFlux
+        volumetricHeatTransfer = heatTransfer/self.dV
+        
+        source = np.zeros((self.nNodesHalo,3))
+        source[:,2] = volumetricHeatTransfer
         return source
     
     

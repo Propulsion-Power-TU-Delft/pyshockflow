@@ -1,12 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle
+from pyshockflow.fluid import FluidIdeal
 from pyshockflow.plot_styles import *
 from scipy.optimize import fsolve
 
 pressureList = [45, 75, 90, 94, 97]
 pickleList = ['Results/outletPressure_%ikPa_NX_200/Results.pik' %pressure for pressure in pressureList]
-
+fluid = FluidIdeal(1.4, 287.05)
 
 fig, axes = plt.subplots(1, 2, figsize=(9, 4))
 
@@ -17,7 +18,7 @@ for i, pickleFile in enumerate(pickleList):
     if i == 0: # compute also reference
         xArea = solution['X Coords']
         areaRatio =  solution['Area'] / np.min(solution['Area'])
-        gammaFluid = solution['Fluid'].gmma
+        gammaFluid = 1.4
         def machFunction(machLocal, areaRatioLocal, gammaFluid):
             residual = areaRatioLocal - 1/machLocal * (2/(gammaFluid+1) * (1 + (gammaFluid-1)/2 * machLocal**2))**((gammaFluid+1)/(2*(gammaFluid-1)))
             return residual
@@ -36,11 +37,11 @@ for i, pickleFile in enumerate(pickleList):
     density = solution['Primitive']["Density"][1:-1,-1]
     pressure = solution['Primitive']["Pressure"][1:-1,-1]
     velocity = solution['Primitive']["Velocity"][1:-1,-1]
-    mach = solution['Fluid'].computeMach_u_p_rho(velocity, pressure, density)
-    entropy = solution['Fluid'].computeEntropy_p_rho(pressure, density)
-    totalPressure = solution['Fluid'].computeTotalPressure_p_M(pressure, mach)
-    temperature = solution['Fluid'].computeTemperature_p_rho(pressure, density)
-    totalTemperature = solution['Fluid'].computeTotalTemperature_T_M(temperature, mach)
+    mach = fluid.computeMach_u_p_rho(velocity, pressure, density)
+    entropy = fluid.computeEntropy_p_rho(pressure, density)
+    totalPressure = fluid.computeTotalPressure_p_M(pressure, mach)
+    temperature = fluid.computeTemperature_p_rho(pressure, density)
+    totalTemperature = fluid.computeTotalTemperature_T_M(temperature, mach)
     
     
     axes[0].plot(xCoords, mach, label=r'$p_{\rm out}=%i$ kPa' %(pressureList[i]))
