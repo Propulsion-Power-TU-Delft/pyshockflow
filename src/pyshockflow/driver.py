@@ -248,20 +248,7 @@ class Driver:
             raise ValueError('Unknown topology type')
         
         self.dAreaTude_dx = np.gradient(self.areaTube, self.xNodesVirtual)
-        self.dV = self.areaTube * self.dx
-        self.areaFluxes = self.computeAreaInterfaces()
-    
-    def computeAreaInterfaces(self):
-        """
-        Compute the area at the interfaces between the nodes, using a simple average. Consider Only the internal nodes
-        """
-        areaFluxes = np.zeros(self.nNodesHalo+1)
-        for i in range(1, len(areaFluxes)-1):
-            areaFluxes[i] = (self.areaTube[i-1]+self.areaTube[i])/2
-        areaFluxes[0] = self.areaTube[0]
-        areaFluxes[-1] = self.areaTube[-1]
-        return areaFluxes[1:-1]
-        
+        self.dV = self.areaReference * self.dx
         
     def instantiatePrimitiveArrays(self):
         """
@@ -609,7 +596,7 @@ class Driver:
         # assemble the full residual vector on every physical node
         residuals = np.zeros((self.nNodes,3))
         for iDim in range(3):
-            residuals[:,iDim] = dt/self.dV[1:-1] * ((flux[0:-1, iDim]*self.areaFluxes[0:-1] - flux[1:, iDim]*self.areaFluxes[1:]) + source[1:-1, iDim]*self.dV[1:-1])
+            residuals[:,iDim] = dt/self.dV[1:-1] * ((flux[0:-1, iDim] - flux[1:, iDim])*self.areaReference + source[1:-1, iDim]*self.dV[1:-1])
         return residuals
 
     
