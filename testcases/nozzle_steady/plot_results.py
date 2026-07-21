@@ -6,6 +6,7 @@ from pyshockflow.plot_styles import *
 from scipy.optimize import fsolve
 
 pressureList = [45, 75, 90, 94, 97]
+colors = plt.cm.viridis(np.linspace(1, 0, len(pressureList)))
 pickleList = ['Results/outletPressure_%ikPa_NX_100/Results.pik' %pressure for pressure in pressureList]
 fluid = FluidIdeal(1.4, 287.05)
 
@@ -31,7 +32,7 @@ for i, pickleFile in enumerate(pickleList):
             else:
                 machTheory[iPoint] = fsolve(machFunction, 1.2, args=(areaRatio[iPoint], gammaFluid))[0]
 
-        axes[0].plot(xArea[::10], machTheory[::10], 'ko', mfc='none' ,label=r'Supersonic reference')
+        axes[0].plot(xArea[::5], machTheory[::5], 'ko', mfc='none' ,label=r'Supersonic reference')
         
     xCoords = solution['X Coords'][1:-1]
     density = solution['Primitive']["Density"][1:-1,-1]
@@ -44,10 +45,10 @@ for i, pickleFile in enumerate(pickleList):
     totalTemperature = fluid.computeTotalTemperature_T_M(temperature, mach)
     
     
-    axes[0].plot(xCoords, mach, label=r'$p_{\rm out}=%i$ kPa' %(pressureList[i]))
+    axes[0].plot(xCoords, mach, label=r'$p_{\rm out}=%i$ kPa' %(pressureList[i]), color=colors[i])
     axes[0].set_ylabel(r'$M$')
     
-    axes[1].plot(xCoords, pressure/1e3)
+    axes[1].plot(xCoords, pressure/1e3, color=colors[i])
     axes[1].set_ylabel(r'$p$ [kPa]')
     
     for ax in axes:

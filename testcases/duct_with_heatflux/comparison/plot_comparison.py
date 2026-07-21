@@ -58,7 +58,7 @@ for iInput in range(len(inputFiles)):
     mach_exit = mach[-1]
     R = np.sqrt(area/np.pi)
     dmdx_analytical = beta / (rho*u*area*cp*T) * qw[iInput] * 2*np.pi*R
-    skip = 5
+    skip = 8
     p_outlet = 90000
     p = res['Primitive']['Pressure'][1:-1,-1]
     totalP = p * (1 + (fluid.gmma-1)/2 * mach**2)**(fluid.gmma/(fluid.gmma-1))
