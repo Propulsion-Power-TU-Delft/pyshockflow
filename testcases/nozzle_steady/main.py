@@ -1,7 +1,7 @@
 from pyshockflow import Driver
 from pyshockflow import Config
 
-pressureList = [45, 75, 90, 94, 97]
+pressureList = [45, 75, 90, 95, 97]
 configList = ['input_%ikPa.ini' %(pressure) for pressure in pressureList]
 
 for configFile in configList:

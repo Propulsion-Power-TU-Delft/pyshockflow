@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from numpy import pi as PI
-from PyShockflow.styles import *
+from pyshockflow.plot_styles import *
 
 xStart = 0
 xEnd = 1.0
