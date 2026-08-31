@@ -10,6 +10,9 @@ from pyshockflow import AdvectionRoeBase, AdvectionRoeArabi, AdvectionRoeVinokur
 from pyshockflow import FluidIdeal, FluidReal
 from pyshockflow.output import Output
 from pyshockflow.math_utils import *
+from pyshockflow.roe_vectorized import (compute_roe_flux_ideal,
+                                        compute_roe_flux_arabi,
+                                        compute_roe_flux_vinokur)
 
 
 class Driver:
@@ -586,17 +589,20 @@ class Driver:
         MUSCL = self.config.isMusclActive()
         
         # compute advection fluxes on every internal interface. Per unit area
-        flux = np.zeros((self.nNodes+1, 3))
-        for iFace in range(flux.shape[0]):
-            flux[iFace, :] = self.computeFluxVector(iFace, iFace+1, primitives, dt, advectionScheme, MUSCL, limiter)
+        if advectionScheme.lower() == 'godunov':
+            # Keep scalar path for Godunov (to be optimized separately)
+            flux = np.zeros((self.nNodes+1, 3))
+            for iFace in range(flux.shape[0]):
+                flux[iFace, :] = self.computeFluxVector(iFace, iFace+1, primitives, dt, advectionScheme, MUSCL, limiter)
+        else:
+            flux = self._computeFluxVectorized(primitives, advectionScheme, MUSCL, limiter)
         
         # compute volumetric source terms, per unit volume
         source = self.computeSourceTerms(primitives)
         
-        # assemble the full residual vector on every physical node
-        residuals = np.zeros((self.nNodes,3))
-        for iDim in range(3):
-            residuals[:,iDim] = dt/self.dV[1:-1] * ((flux[0:-1, iDim] - flux[1:, iDim])*self.areaReference + source[1:-1, iDim]*self.dV[1:-1])
+        # assemble the full residual vector on every physical node (vectorized)
+        dV_int = self.dV[1:-1, np.newaxis]  # (nNodes, 1) for broadcasting
+        residuals = (dt / dV_int) * ((flux[:-1, :] - flux[1:, :]) * self.areaReference + source[1:-1, :] * dV_int)
         return residuals
 
     
@@ -889,6 +895,203 @@ class Driver:
                 raise ValueError('Limiter not recognized!')
             
         return psi
+    
+
+    # ------------------------------------------------------------------
+    # Vectorized flux computation (Phase 1 optimization)
+    # ------------------------------------------------------------------
+
+    def _computeFluxVectorized(self, primitives, advectionScheme, MUSCL, limiter):
+        """Compute all interface fluxes at once using vectorized Roe solvers.
+
+        Replaces the per-interface Python ``for`` loop and per-call class
+        instantiation with a single call to a vectorized NumPy function.
+        """
+        rho = primitives['Density']    # shape (nNodesHalo,)
+        u   = primitives['Velocity']
+        p   = primitives['Pressure']
+
+        nFaces = self.nNodes + 1
+
+        # --- Build left / right states for every interface (first-order) ---
+        rhoL = rho[:-1].copy()
+        rhoR = rho[1:].copy()
+        uL   = u[:-1].copy()
+        uR   = u[1:].copy()
+        pL   = p[:-1].copy()
+        pR   = p[1:].copy()
+
+        # --- Apply MUSCL reconstruction to interior faces ----------------
+        if MUSCL:
+            self._applyMusclReconstructionVectorized(
+                primitives, rhoL, rhoR, uL, uR, pL, pR, limiter)
+
+        # --- Dispatch to the appropriate vectorized solver ----------------
+        scheme = advectionScheme.lower()
+
+        if scheme == 'roe':
+            if self.fluidModel == 'real':
+                raise ValueError(
+                    'Basic Roe scheme is not available for real gas model. '
+                    'Select Roe_Arabi or Roe_Vinokur, depending on the Roe '
+                    'Avg procedure that you want.')
+            return compute_roe_flux_ideal(
+                rhoL, rhoR, uL, uR, pL, pR,
+                self.fluid.gmma,
+                self.entropyFixActive, self.entropyFixCoefficient)
+
+        elif scheme == 'roe_arabi':
+            if self.fluidModel == 'ideal':
+                raise ValueError(
+                    'Roe_Arabi scheme is not available for ideal gas model. '
+                    'Select Standard Roe scheme.')
+            # Per-interface EOS calls (scalar; real-gas vectorization in Phase 4)
+            eL_arr = np.empty(nFaces)
+            eR_arr = np.empty(nFaces)
+            aL_arr = np.empty(nFaces)
+            aR_arr = np.empty(nFaces)
+            for i in range(nFaces):
+                eL_arr[i] = self.fluid.computeStaticEnergy_p_rho(pL[i], rhoL[i])
+                eR_arr[i] = self.fluid.computeStaticEnergy_p_rho(pR[i], rhoR[i])
+                aL_arr[i] = self.fluid.computeSoundSpeed_p_rho(pL[i], rhoL[i])
+                aR_arr[i] = self.fluid.computeSoundSpeed_p_rho(pR[i], rhoR[i])
+            return compute_roe_flux_arabi(
+                rhoL, rhoR, uL, uR, pL, pR,
+                eL_arr, eR_arr, aL_arr, aR_arr,
+                self.entropyFixActive, self.entropyFixCoefficient)
+
+        elif scheme == 'roe_vinokur':
+            if self.fluidModel == 'ideal':
+                # Ideal-gas: chi=0, kappa=gamma-1 everywhere (fully vectorized)
+                gm1 = self.fluid.gmma - 1.0
+                eL_arr = pL / (gm1 * rhoL)
+                eR_arr = pR / (gm1 * rhoR)
+                chiL_arr = np.zeros(nFaces)
+                kappaL_arr = np.full(nFaces, gm1)
+                chiR_arr = np.zeros(nFaces)
+                kappaR_arr = np.full(nFaces, gm1)
+                chiM_arr = np.zeros(nFaces)
+                kappaM_arr = np.full(nFaces, gm1)
+            else:
+                # Real-gas: scalar EOS calls (to be optimized in Phase 4)
+                eL_arr = np.empty(nFaces)
+                eR_arr = np.empty(nFaces)
+                chiL_arr = np.empty(nFaces)
+                kappaL_arr = np.empty(nFaces)
+                chiR_arr = np.empty(nFaces)
+                kappaR_arr = np.empty(nFaces)
+                chiM_arr = np.empty(nFaces)
+                kappaM_arr = np.empty(nFaces)
+                p_mean = 0.5 * (pL + pR)
+                rho_mean = 0.5 * (rhoL + rhoR)
+                for i in range(nFaces):
+                    eL_arr[i] = self.fluid.computeStaticEnergy_p_rho(pL[i], rhoL[i])
+                    eR_arr[i] = self.fluid.computeStaticEnergy_p_rho(pR[i], rhoR[i])
+                    chiL_arr[i], kappaL_arr[i] = self.fluid.computeChiKappa_VinokurScheme_p_rho(pL[i], rhoL[i])
+                    chiR_arr[i], kappaR_arr[i] = self.fluid.computeChiKappa_VinokurScheme_p_rho(pR[i], rhoR[i])
+                    chiM_arr[i], kappaM_arr[i] = self.fluid.computeChiKappa_VinokurScheme_p_rho(p_mean[i], rho_mean[i])
+
+            return compute_roe_flux_vinokur(
+                rhoL, rhoR, uL, uR, pL, pR,
+                eL_arr, eR_arr,
+                chiL_arr, chiR_arr, chiM_arr,
+                kappaL_arr, kappaR_arr, kappaM_arr,
+                self.entropyFixActive, self.entropyFixCoefficient)
+        else:
+            raise ValueError(f'Unknown flux method: {advectionScheme}')
+
+
+    def _applyMusclReconstructionVectorized(self, primitives, rhoL, rhoR,
+                                            uL, uR, pL, pR, limiter):
+        """Apply MUSCL reconstruction to interior faces, modifying L/R arrays in-place.
+
+        The original per-face loop with temporary 3-element allocations is
+        replaced by slicing the full primitive arrays into stencil arrays and
+        computing all limiters at once.
+        """
+        rho = primitives['Density']
+        u   = primitives['Velocity']
+        p   = primitives['Pressure']
+        # xNodes uses the physical grid (same indexing as original code)
+        x = self.xNodes
+
+        # MUSCL condition: il > 2 and ir < nNodesHalo - 3
+        # => face index iFace in [3, nNodes - 3]
+        ms = 3                       # first MUSCL face
+        me = self.nNodes - 3         # last MUSCL face (inclusive)
+
+        if ms > me:
+            return  # grid too small for MUSCL stencil
+
+        nMuscl = me - ms + 1
+
+        # Stencil slices into the halo-inclusive arrays (size nNodesHalo)
+        # face iFace => il=iFace, ir=iFace+1
+        # stencil: il-1, il, ir, ir+1 = iFace-1 .. iFace+2
+        s0 = ms - 1                  # start of il-1 range
+        U_lm = np.column_stack([rho[s0       : s0 + nMuscl],
+                                u[s0         : s0 + nMuscl],
+                                p[s0         : s0 + nMuscl]])
+        U_l  = np.column_stack([rho[s0 + 1   : s0 + 1 + nMuscl],
+                                u[s0 + 1     : s0 + 1 + nMuscl],
+                                p[s0 + 1     : s0 + 1 + nMuscl]])
+        U_r  = np.column_stack([rho[s0 + 2   : s0 + 2 + nMuscl],
+                                u[s0 + 2     : s0 + 2 + nMuscl],
+                                p[s0 + 2     : s0 + 2 + nMuscl]])
+        U_rp = np.column_stack([rho[s0 + 3   : s0 + 3 + nMuscl],
+                                u[s0 + 3     : s0 + 3 + nMuscl],
+                                p[s0 + 3     : s0 + 3 + nMuscl]])
+
+        # Grid spacing (uses self.xNodes — matches the original code)
+        dx_lm_l = x[ms     : me + 1] - x[ms - 1 : me]        # x[il]-x[il-1]
+        dx_l_r  = x[ms + 1 : me + 2] - x[ms     : me + 1]    # x[ir]-x[il]
+        dx_r_rp = x[ms + 2 : me + 3] - x[ms + 1 : me + 2]    # x[ir+1]-x[ir]
+
+        # Smoothness indicators  (nMuscl, 3)
+        r_left  = ((U_l - U_lm) / dx_lm_l[:, np.newaxis]) / \
+                  ((U_r - U_l)  / dx_l_r[:, np.newaxis] + 1e-6)
+        r_right = ((U_r - U_l)  / dx_l_r[:, np.newaxis]) / \
+                  ((U_rp - U_r) / dx_r_rp[:, np.newaxis] + 1e-6)
+
+        # Flux limiters (nMuscl, 3)
+        psi_left  = self._computeFluxLimiterVec(r_left, limiter)
+        psi_right = self._computeFluxLimiterVec(r_right, limiter)
+
+        # Reconstructed states
+        U_l_rec = U_l + 0.5 * psi_left  * (U_r  - U_l)
+        U_r_rec = U_r - 0.5 * psi_right * (U_rp - U_r)
+
+        # Overwrite the L/R arrays for MUSCL faces
+        rhoL[ms : me + 1] = U_l_rec[:, 0]
+        uL  [ms : me + 1] = U_l_rec[:, 1]
+        pL  [ms : me + 1] = U_l_rec[:, 2]
+        rhoR[ms : me + 1] = U_r_rec[:, 0]
+        uR  [ms : me + 1] = U_r_rec[:, 1]
+        pR  [ms : me + 1] = U_r_rec[:, 2]
+
+
+    @staticmethod
+    def _computeFluxLimiterVec(r, limiter):
+        """Vectorized flux limiter for arrays of shape (N, 3).
+
+        The limiter type is resolved once (no per-element string comparison).
+        """
+        lim = limiter.lower()
+        if lim == 'van albada':
+            return (r ** 2 + r) / (1.0 + r ** 2)
+        elif lim == 'van leer':
+            abs_r = np.abs(r)
+            return (r + abs_r) / (1.0 + abs_r)
+        elif lim == 'min-mod':
+            return np.maximum(0.0, np.minimum(1.0, r))
+        elif lim == 'superbee':
+            return np.maximum(0.0, np.maximum(np.minimum(2.0 * r, 1.0),
+                                              np.minimum(r, 2.0)))
+        elif lim == 'none':
+            return np.ones_like(r)
+        else:
+            raise ValueError(f'Limiter not recognized: {limiter}')
+
     
     def readNozzleFile(self, xTube, filepath):
         nozzleData = np.loadtxt(filepath, skiprows=1, delimiter=',', dtype=float)

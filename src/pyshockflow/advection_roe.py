@@ -315,13 +315,10 @@ def applyEntropyFix(eigs, aAVG, kappa):
         Fix coefficient (default 0.2).
     """
     delta = kappa * aAVG
-    fixed = np.zeros_like(eigs)
-    for i, lam in enumerate(eigs):
-        if abs(lam) < delta:
-            fixed[i] = 0.5 * (lam**2 / delta + delta)
-        else:
-            fixed[i] = abs(lam)
-    return fixed
+    abs_eigs = np.abs(eigs)
+    return np.where(abs_eigs < delta,
+                    0.5 * (eigs**2 / delta + delta),
+                    abs_eigs)
 
 
 
