@@ -80,6 +80,11 @@ class Driver:
         self.cflMax = self.config.getCFLMax()
         self.timeMax = self.config.getTimeMax()
         
+        # Entropy fix settings
+        self.entropyFixActive = self.config.isEntropyFixActive()
+        self.entropyFixCoefficient = self.config.getEntropyFixCoefficient()
+        self._cached_sound_speed = None
+        
         # Boundary Conditions
         self.boundaryType = self.config.getBoundaryConditions()    
         print("Boundary Conditions Left:                    %s" %self.boundaryType[0])
@@ -111,6 +116,16 @@ class Driver:
             self.initializeFromRestartFile(restartFile)
         else:
             self.imposeInitialConditions()
+        
+        # Initialize conservative variables for the whole domain at t=0
+        self.solutionConservative['u1'], self.solutionConservative['u2'], self.solutionConservative['u3'] = (
+            getConservativesFromPrimitives(
+                self.solutionPrimitive['Density'],
+                self.solutionPrimitive['Velocity'],
+                self.solutionPrimitive['Pressure'],
+                self.fluid
+            )
+        )
         
         self.setBoundaryConditions()
     
@@ -386,9 +401,16 @@ class Driver:
         else:
             raise ValueError("Unknown boundary condition type on the right")
         
-        # update also the conservative variable arrays based on what has been done on the primitive
-        self.solutionConservative['u1'], self.solutionConservative['u2'], self.solutionConservative['u3'] = (getConservativesFromPrimitives(
-            self.solutionPrimitive['Density'], self.solutionPrimitive['Velocity'], self.solutionPrimitive['Pressure'], self.fluid))
+        # update only the halo boundary cells in conservative variables
+        for idx in (0, -1):
+            self.solutionConservative['u1'][idx], self.solutionConservative['u2'][idx], self.solutionConservative['u3'][idx] = (
+                getConservativesFromPrimitives(
+                    self.solutionPrimitive['Density'][idx],
+                    self.solutionPrimitive['Velocity'][idx],
+                    self.solutionPrimitive['Pressure'][idx],
+                    self.fluid
+                )
+            )
 
 
     def setReflectiveBoundaryConditions(self, location):
@@ -619,10 +641,8 @@ class Driver:
 
     def computeTimeStep(self, primitive):
         velocity = primitive['Velocity'][1:-1]
-        speedOfSound = np.zeros_like(velocity)
-        for i in range(len(speedOfSound)):
-            speedOfSound[i] = self.fluid.computeSoundSpeed_p_rho(primitive['Pressure'][i+1], primitive['Density'][i+1])
-        dtMax = np.min(self.dx[1:-1] * self.cflMax / (np.abs(velocity)+speedOfSound))
+        speedOfSound = self.fluid.computeSoundSpeed_p_rho(primitive['Pressure'][1:-1], primitive['Density'][1:-1])
+        dtMax = np.min(self.dx[1:-1] * self.cflMax / (np.abs(velocity) + speedOfSound))
         return dtMax
     
     
@@ -945,16 +965,19 @@ class Driver:
                 raise ValueError(
                     'Roe_Arabi scheme is not available for ideal gas model. '
                     'Select Standard Roe scheme.')
-            # Per-interface EOS calls (scalar; real-gas vectorization in Phase 4)
-            eL_arr = np.empty(nFaces)
-            eR_arr = np.empty(nFaces)
-            aL_arr = np.empty(nFaces)
-            aR_arr = np.empty(nFaces)
-            for i in range(nFaces):
-                eL_arr[i] = self.fluid.computeStaticEnergy_p_rho(pL[i], rhoL[i])
-                eR_arr[i] = self.fluid.computeStaticEnergy_p_rho(pR[i], rhoR[i])
-                aL_arr[i] = self.fluid.computeSoundSpeed_p_rho(pL[i], rhoL[i])
-                aR_arr[i] = self.fluid.computeSoundSpeed_p_rho(pR[i], rhoR[i])
+            if not MUSCL:
+                # Pre-evaluate simultaneously on all cell nodes in a single pass (saves 50% EOS evaluations)
+                e_nodes, a_nodes = self.fluid.compute_e_and_a_p_rho(p, rho)
+                eL_arr = e_nodes[:-1]
+                eR_arr = e_nodes[1:]
+                aL_arr = a_nodes[:-1]
+                aR_arr = a_nodes[1:]
+                self._cached_sound_speed = a_nodes[1:-1]
+            else:
+                eL_arr, aL_arr = self.fluid.compute_e_and_a_p_rho(pL, rhoL)
+                eR_arr, aR_arr = self.fluid.compute_e_and_a_p_rho(pR, rhoR)
+                self._cached_sound_speed = None
+
             return compute_roe_flux_arabi(
                 rhoL, rhoR, uL, uR, pL, pR,
                 eL_arr, eR_arr, aL_arr, aR_arr,
@@ -973,23 +996,22 @@ class Driver:
                 chiM_arr = np.zeros(nFaces)
                 kappaM_arr = np.full(nFaces, gm1)
             else:
-                # Real-gas: scalar EOS calls (to be optimized in Phase 4)
-                eL_arr = np.empty(nFaces)
-                eR_arr = np.empty(nFaces)
-                chiL_arr = np.empty(nFaces)
-                kappaL_arr = np.empty(nFaces)
-                chiR_arr = np.empty(nFaces)
-                kappaR_arr = np.empty(nFaces)
-                chiM_arr = np.empty(nFaces)
-                kappaM_arr = np.empty(nFaces)
+                if not MUSCL:
+                    # Pre-evaluate on cell nodes in a single pass
+                    e_nodes, chi_nodes, kappa_nodes = self.fluid.compute_e_and_chi_kappa_p_rho(p, rho)
+                    eL_arr = e_nodes[:-1]
+                    eR_arr = e_nodes[1:]
+                    chiL_arr = chi_nodes[:-1]
+                    chiR_arr = chi_nodes[1:]
+                    kappaL_arr = kappa_nodes[:-1]
+                    kappaR_arr = kappa_nodes[1:]
+                else:
+                    eL_arr, chiL_arr, kappaL_arr = self.fluid.compute_e_and_chi_kappa_p_rho(pL, rhoL)
+                    eR_arr, chiR_arr, kappaR_arr = self.fluid.compute_e_and_chi_kappa_p_rho(pR, rhoR)
+
                 p_mean = 0.5 * (pL + pR)
                 rho_mean = 0.5 * (rhoL + rhoR)
-                for i in range(nFaces):
-                    eL_arr[i] = self.fluid.computeStaticEnergy_p_rho(pL[i], rhoL[i])
-                    eR_arr[i] = self.fluid.computeStaticEnergy_p_rho(pR[i], rhoR[i])
-                    chiL_arr[i], kappaL_arr[i] = self.fluid.computeChiKappa_VinokurScheme_p_rho(pL[i], rhoL[i])
-                    chiR_arr[i], kappaR_arr[i] = self.fluid.computeChiKappa_VinokurScheme_p_rho(pR[i], rhoR[i])
-                    chiM_arr[i], kappaM_arr[i] = self.fluid.computeChiKappa_VinokurScheme_p_rho(p_mean[i], rho_mean[i])
+                _, chiM_arr, kappaM_arr = self.fluid.compute_e_and_chi_kappa_p_rho(p_mean, rho_mean)
 
             return compute_roe_flux_vinokur(
                 rhoL, rhoR, uL, uR, pL, pR,

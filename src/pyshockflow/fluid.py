@@ -83,45 +83,222 @@ class FluidIdeal():
         chi = 0
         kappa = self.gmma-1
         return chi, kappa
+
+    def compute_e_and_a_p_rho(self, p, rho):
+        e = p / ((self.gmma - 1.0) * rho)
+        a = np.sqrt(self.gmma * p / rho)
+        return e, a
+
+    def compute_e_and_chi_kappa_p_rho(self, p, rho):
+        e = p / ((self.gmma - 1.0) * rho)
+        gm1 = self.gmma - 1.0
+        if isinstance(p, np.ndarray):
+            chi = np.zeros_like(p)
+            kappa = np.full_like(p, gm1)
+        else:
+            chi = 0.0
+            kappa = gm1
+        return e, chi, kappa
     
     
 class FluidReal():
     """
-    Real Fluid Class, where thermodynamic properties and transformations are taken from coolprop
+    Real Fluid Class, where thermodynamic properties and transformations are taken from CoolProp / external backends
     """
     def __init__(self, fluid_name, fluid_library, print_error=True):
         self.fluid_name = fluid_name
         self.fluid_library = fluid_library
         self.fluid = FP.fluid(fluid_library, fluid_name, print_error=print_error)
+        
+        # Initialize persistent low-level AbstractState if available for direct high-speed evaluation
+        self._backend = None
+        if fluid_library in ['CoolProp', 'HEOS']:
+            try:
+                import CoolProp
+                from CoolProp.CoolProp import AbstractState
+                self._backend = AbstractState('HEOS', fluid_name)
+            except Exception:
+                self._backend = None
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state['_backend'] = None
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        if self.fluid_library in ['CoolProp', 'HEOS']:
+            try:
+                import CoolProp
+                from CoolProp.CoolProp import AbstractState
+                self._backend = AbstractState('HEOS', self.fluid_name)
+            except Exception:
+                self._backend = None
+        else:
+            self._backend = None
 
     def computeStaticEnergy_p_rho(self, p, rho):
-        e = FP.PropsSI('U', 'P', p, 'D', rho, self.fluid)
-        return e
+        if np.isscalar(p):
+            if self._backend is not None:
+                try:
+                    import CoolProp
+                    self._backend.update(CoolProp.DmassP_INPUTS, float(rho), float(p))
+                    return self._backend.umass()
+                except Exception:
+                    pass
+            return FP.PropsSI('U', 'P', p, 'D', rho, self.fluid)
+        # Array inputs
+        if self._backend is not None:
+            import CoolProp
+            out = np.empty(len(p))
+            for i in range(len(p)):
+                try:
+                    self._backend.update(CoolProp.DmassP_INPUTS, float(rho[i]), float(p[i]))
+                    out[i] = self._backend.umass()
+                except Exception:
+                    out[i] = FP.PropsSI('U', 'P', p[i], 'D', rho[i], self.fluid)
+            return out
+        return FP.PropsSI('U', 'P', p, 'D', rho, self.fluid)
     
     def computePressure_rho_e(self, rho, e):
-        p = FP.PropsSI('P', 'D', rho, 'U', e, self.fluid)
-        return p
+        if np.isscalar(rho):
+            if self._backend is not None:
+                try:
+                    import CoolProp
+                    self._backend.update(CoolProp.DmassUmass_INPUTS, float(rho), float(e))
+                    return self._backend.p()
+                except Exception:
+                    pass
+            return FP.PropsSI('P', 'D', rho, 'U', e, self.fluid)
+        # Array inputs
+        if self._backend is not None:
+            import CoolProp
+            out = np.empty(len(rho))
+            for i in range(len(rho)):
+                try:
+                    self._backend.update(CoolProp.DmassUmass_INPUTS, float(rho[i]), float(e[i]))
+                    out[i] = self._backend.p()
+                except Exception:
+                    out[i] = FP.PropsSI('P', 'D', rho[i], 'U', e[i], self.fluid)
+            return out
+        return FP.PropsSI('P', 'D', rho, 'U', e, self.fluid)
 
     def computeSoundSpeed_p_rho(self, p, rho):
-        try:
-            a = FP.PropsSI("A", "P", p, "D", rho, self.fluid)
-            return a
-        except:
-            # two phase region (or close) 
-            T = self.computeTemperature_p_rho(p, rho)
+        if np.isscalar(p):
+            if self._backend is not None:
+                try:
+                    import CoolProp
+                    self._backend.update(CoolProp.DmassP_INPUTS, float(rho), float(p))
+                    return self._backend.speed_sound()
+                except Exception:
+                    pass
             try:
-                Q = FP.PropsSI("Q", "T", T, "P", p, self.fluid)
-            except:
-                # if the state is very close to saturation line it fails to find the quality -> set artifically to 1
-                Q = 1
+                a = FP.PropsSI("A", "P", p, "D", rho, self.fluid)
+                return a
+            except Exception:
+                return self._computeSoundSpeed_twophase(p, rho)
+        
+        # Array inputs
+        out = np.empty(len(p))
+        for i in range(len(p)):
+            out[i] = self.computeSoundSpeed_p_rho(p[i], rho[i])
+        return out
 
-            # Speed of sound in liquid and vapor phases at the given T and P
-            a_liquid = FP.PropsSI("A", "T", T, "Q", 0, self.fluid)  # sound speed for liquid phase
-            a_vapor = FP.PropsSI("A", "T", T, "Q", 1, self.fluid)   # sound speed for vapor phase
+    def _computeSoundSpeed_twophase(self, p, rho):
+        T = self.computeTemperature_p_rho(p, rho)
+        try:
+            Q = FP.PropsSI("Q", "T", T, "P", p, self.fluid)
+        except Exception:
+            Q = 1
+        a_liquid = FP.PropsSI("A", "T", T, "Q", 0, self.fluid)
+        a_vapor = FP.PropsSI("A", "T", T, "Q", 1, self.fluid)
+        return (1 - Q) * a_liquid + Q * a_vapor
 
-            # Calculate weighted speed of sound based on quality
-            a = (1 - Q) * a_liquid + Q * a_vapor
-            return a
+    def compute_e_and_a_p_rho(self, p, rho):
+        """Simultaneously evaluate internal energy e and sound speed a from (p, rho).
+        Performs a single state update rather than two separate thermodynamic solves.
+        """
+        if np.isscalar(p):
+            if self._backend is not None:
+                try:
+                    import CoolProp
+                    self._backend.update(CoolProp.DmassP_INPUTS, float(rho), float(p))
+                    return self._backend.umass(), self._backend.speed_sound()
+                except Exception:
+                    pass
+            return self.computeStaticEnergy_p_rho(p, rho), self.computeSoundSpeed_p_rho(p, rho)
+
+        n = len(p)
+        e = np.empty(n)
+        a = np.empty(n)
+        if self._backend is not None:
+            import CoolProp
+            for i in range(n):
+                try:
+                    self._backend.update(CoolProp.DmassP_INPUTS, float(rho[i]), float(p[i]))
+                    e[i] = self._backend.umass()
+                    a[i] = self._backend.speed_sound()
+                except Exception:
+                    e[i] = self.computeStaticEnergy_p_rho(p[i], rho[i])
+                    a[i] = self.computeSoundSpeed_p_rho(p[i], rho[i])
+        else:
+            for i in range(n):
+                e[i] = self.computeStaticEnergy_p_rho(p[i], rho[i])
+                a[i] = self.computeSoundSpeed_p_rho(p[i], rho[i])
+        return e, a
+
+    def compute_e_and_chi_kappa_p_rho(self, p, rho):
+        """Simultaneously evaluate internal energy e, and Vinokur derivatives (chi, kappa).
+        Uses exact analytical partial derivatives from AbstractState when available.
+        """
+        if np.isscalar(p):
+            if self._backend is not None:
+                try:
+                    import CoolProp
+                    self._backend.update(CoolProp.DmassP_INPUTS, float(rho), float(p))
+                    e = self._backend.umass()
+                    dp_drho_econst = self._backend.first_partial_deriv(CoolProp.iP, CoolProp.iDmass, CoolProp.iUmass)
+                    dp_de_rhoconst = self._backend.first_partial_deriv(CoolProp.iP, CoolProp.iUmass, CoolProp.iDmass)
+                    chi = dp_drho_econst - (e / rho) * dp_de_rhoconst
+                    kappa = dp_de_rhoconst / rho
+                    return e, chi, kappa
+                except Exception:
+                    pass
+            e = FP.PropsSI("U", "P", p, "D", rho, self.fluid)
+            dp_drho_econst = FP.PropsSI("d(P)/d(D)|U", "P", p, "D", rho, self.fluid)
+            dp_de_rhoconst = FP.PropsSI("d(P)/d(U)|D", "P", p, "D", rho, self.fluid)
+            chi = dp_drho_econst - e/rho * dp_de_rhoconst
+            kappa = dp_de_rhoconst / rho
+            return e, chi, kappa
+
+        n = len(p)
+        e = np.empty(n)
+        chi = np.empty(n)
+        kappa = np.empty(n)
+        if self._backend is not None:
+            import CoolProp
+            for i in range(n):
+                try:
+                    self._backend.update(CoolProp.DmassP_INPUTS, float(rho[i]), float(p[i]))
+                    e[i] = self._backend.umass()
+                    dp_drho_econst = self._backend.first_partial_deriv(CoolProp.iP, CoolProp.iDmass, CoolProp.iUmass)
+                    dp_de_rhoconst = self._backend.first_partial_deriv(CoolProp.iP, CoolProp.iUmass, CoolProp.iDmass)
+                    chi[i] = dp_drho_econst - (e[i] / rho[i]) * dp_de_rhoconst
+                    kappa[i] = dp_de_rhoconst / rho[i]
+                except Exception:
+                    e[i] = FP.PropsSI("U", "P", p[i], "D", rho[i], self.fluid)
+                    dp_drho_econst = FP.PropsSI("d(P)/d(D)|U", "P", p[i], "D", rho[i], self.fluid)
+                    dp_de_rhoconst = FP.PropsSI("d(P)/d(U)|D", "P", p[i], "D", rho[i], self.fluid)
+                    chi[i] = dp_drho_econst - e[i]/rho[i] * dp_de_rhoconst
+                    kappa[i] = dp_de_rhoconst / rho[i]
+        else:
+            for i in range(n):
+                e[i] = FP.PropsSI("U", "P", p[i], "D", rho[i], self.fluid)
+                dp_drho_econst = FP.PropsSI("d(P)/d(D)|U", "P", p[i], "D", rho[i], self.fluid)
+                dp_de_rhoconst = FP.PropsSI("d(P)/d(U)|D", "P", p[i], "D", rho[i], self.fluid)
+                chi[i] = dp_drho_econst - e[i]/rho[i] * dp_de_rhoconst
+                kappa[i] = dp_de_rhoconst / rho[i]
+        return e, chi, kappa
 
     def computeMach_u_p_rho(self, u, p, rho):
         soundSpeed = self.computeSoundSpeed_p_rho(p, rho)

@@ -302,14 +302,15 @@ def compute_roe_flux_vinokur(rhoL, rhoR, uL, uR, pL, pR,
     D_term = (sHat * drho) ** 2 + dp ** 2
 
     denom_proj = D_term - dp * error_term
+    safe_denom = np.where(denom_proj == 0.0, 1.0, denom_proj)
     chiAVG = np.where(
         drho == 0,
         chiHat,
-        (D_term * chiHat + sHat ** 2 * drho * error_term) / denom_proj)
+        (D_term * chiHat + sHat ** 2 * drho * error_term) / safe_denom)
     kappaAVG = np.where(
         dp == 0,
         kappaHat,
-        (D_term * kappaHat) / denom_proj)
+        (D_term * kappaHat) / safe_denom)
 
     aAVG = np.sqrt(chiAVG + kappaAVG * hAVG)
 
