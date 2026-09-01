@@ -6,19 +6,23 @@ import csv
 import sys
 from pathlib import Path
 from pyshockflow import RiemannProblem
-from pyshockflow import AdvectionRoeBase, AdvectionRoeArabi, AdvectionRoeVinokur
+from pyshockflow import AdvectionRoeBase, AdvectionRoeArabi, AdvectionRoeVinokur, AdvectionHLLC
 from pyshockflow import FluidIdeal, FluidReal
 from pyshockflow.output import Output
 from pyshockflow.math_utils import *
 from pyshockflow.roe_vectorized import (compute_roe_flux_ideal,
                                         compute_roe_flux_arabi,
                                         compute_roe_flux_vinokur)
+from pyshockflow.hllc_vectorized import (compute_hllc_flux_ideal,
+                                         compute_hllc_flux_real)
 try:
     from pyshockflow.kernels_numba import (
         NUMBA_AVAILABLE,
         compute_roe_flux_ideal_numba,
         compute_roe_flux_arabi_numba,
         compute_roe_flux_vinokur_numba,
+        compute_hllc_flux_ideal_numba,
+        compute_hllc_flux_real_numba,
         apply_muscl_reconstruction_numba,
         compute_residuals_numba,
         update_solution_numba,
@@ -859,6 +863,9 @@ class Driver:
                 roe = AdvectionRoeVinokur(rhoL, rhoR, uL, uR, pL, pR, self.fluid)
                 roe.computeAveragedVariables()
                 flux = roe.computeFlux(entropyFixActive=self.entropyFixActive, fixCoefficient=self.entropyFixCoefficient)
+        elif advectionScheme.lower()=='hllc':
+                hllc = AdvectionHLLC(rhoL, rhoR, uL, uR, pL, pR, self.fluid)
+                flux = hllc.computeFlux(entropyFixActive=self.entropyFixActive, fixCoefficient=self.entropyFixCoefficient)
         else:
             raise ValueError('Unknown flux method')
         
@@ -1083,6 +1090,35 @@ class Driver:
                 chiL_arr, chiR_arr, chiM_arr,
                 kappaL_arr, kappaR_arr, kappaM_arr,
                 self.entropyFixActive, self.entropyFixCoefficient)
+
+        elif scheme == 'hllc':
+            if self.fluidModel == 'ideal':
+                if NUMBA_AVAILABLE:
+                    return compute_hllc_flux_ideal_numba(
+                        rhoL, rhoR, uL, uR, pL, pR, self.fluid.gmma)
+                return compute_hllc_flux_ideal(
+                    rhoL, rhoR, uL, uR, pL, pR, self.fluid.gmma)
+            else:
+                if not MUSCL:
+                    # Pre-evaluate simultaneously on all cell nodes in a single pass (saves 50% EOS evaluations)
+                    e_nodes, a_nodes = self.fluid.compute_e_and_a_p_rho(p, rho)
+                    eL_arr = e_nodes[:-1]
+                    eR_arr = e_nodes[1:]
+                    aL_arr = a_nodes[:-1]
+                    aR_arr = a_nodes[1:]
+                    self._cached_sound_speed = a_nodes[1:-1]
+                else:
+                    eL_arr, aL_arr = self.fluid.compute_e_and_a_p_rho(pL, rhoL)
+                    eR_arr, aR_arr = self.fluid.compute_e_and_a_p_rho(pR, rhoR)
+                    self._cached_sound_speed = None
+
+                if NUMBA_AVAILABLE:
+                    return compute_hllc_flux_real_numba(
+                        rhoL, rhoR, uL, uR, pL, pR,
+                        eL_arr, eR_arr, aL_arr, aR_arr)
+                return compute_hllc_flux_real(
+                    rhoL, rhoR, uL, uR, pL, pR,
+                    eL_arr, eR_arr, aL_arr, aR_arr)
         else:
             raise ValueError(f'Unknown flux method: {advectionScheme}')
 

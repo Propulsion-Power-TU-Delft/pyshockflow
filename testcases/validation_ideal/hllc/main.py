@@ -1,14 +1,8 @@
 from pyshockflow import Driver
 from pyshockflow import Config
 
-inputFiles = [
-    'input_ideal_standard.ini',
-    'input_ideal_vinokur.ini',
-    'input_real_arabi.ini',
-    'input_real_vinokur.ini',
-    'input_real_hllc.ini',
-]
-
+testNumbers = [1,3,5]
+inputFiles = ['input_Test%i.ini' % i for i in testNumbers]
 for inputFile in inputFiles:
     config = Config(inputFile)
     tube = Driver(config)

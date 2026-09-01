@@ -11,6 +11,7 @@ markerSize = 4
 analyticalResults = ['../analytical/solutions/Test%i.pik' % i for i in testNumber]
 godunovResults = ['../godunov/Results/Test%i_NX_100/Results.pik' % i for i in testNumber]
 roeResults = ['../roe/Results/Test%i_NX_100/Results.pik' % i for i in testNumber]
+hllcResults = ['../hllc/Results/Test%i_NX_100/Results.pik' % i for i in testNumber]
 lw=2
 
 figSize = (10, 3.5)
@@ -69,6 +70,22 @@ for iInput in range(len(analyticalResults)):
             res['X Coords'][1:-1], 
             res['Primitive']['Pressure'][1:-1,-1],
             '-.', ms=markerSize, mfc='none', lw=lw)
+    
+    # HLLC
+    with open(hllcResults[iInput], 'rb') as file:
+        res = pickle.load(file)
+        ax[0].plot(
+            res['X Coords'][1:-1], 
+            res['Primitive']['Density'][1:-1,-1],
+            ':', ms=markerSize, label=r'HLLC', mfc='none', lw=lw)
+        ax[1].plot(
+            res['X Coords'][1:-1], 
+            res['Primitive']['Velocity'][1:-1,-1],
+            ':', ms=markerSize, mfc='none', lw=lw)
+        ax[2].plot(
+            res['X Coords'][1:-1], 
+            res['Primitive']['Pressure'][1:-1,-1],
+            ':', ms=markerSize, mfc='none', lw=lw)
         
     
     for axx in ax:
@@ -77,7 +94,7 @@ for iInput in range(len(analyticalResults)):
     
     # Add a single legend at the bottom center
     # Add a single legend at the bottom center
-    fig.legend(loc='upper center', ncol=3, bbox_to_anchor=(0.5, +1.11))
+    fig.legend(loc='upper center', ncol=4, bbox_to_anchor=(0.5, +1.11))
     plt.tight_layout()
     # Adjust layout to make room for the legend
     

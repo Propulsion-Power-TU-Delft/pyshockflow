@@ -420,6 +420,183 @@ def compute_roe_flux_vinokur_numba(rhoL, rhoR, uL, uR, pL, pR,
 
 
 # ---------------------------------------------------------------------------
+# HLLC Numerical Flux: Ideal Gas (Numba)
+# ---------------------------------------------------------------------------
+
+@njit(fastmath=True)
+def compute_hllc_flux_ideal_numba(rhoL, rhoR, uL, uR, pL, pR, gmma):
+    n = len(rhoL)
+    flux = np.empty((n, 3))
+    gm1 = gmma - 1.0
+    
+    for i in range(n):
+        rL = rhoL[i]
+        rR = rhoR[i]
+        vL = uL[i]
+        vR = uR[i]
+        prL = pL[i]
+        prR = pR[i]
+        
+        enL = prL / (gm1 * rL)
+        enR = prR / (gm1 * rR)
+        aL = np.sqrt(gmma * prL / rL)
+        aR = np.sqrt(gmma * prR / rR)
+        
+        EL = enL + 0.5 * vL * vL
+        ER = enR + 0.5 * vR * vR
+        
+        fL1 = rL * vL
+        fL2 = rL * vL * vL + prL
+        fL3 = vL * (rL * EL + prL)
+        
+        fr1 = rR * vR
+        fr2 = rR * vR * vR + prR
+        fr3 = vR * (rR * ER + prR)
+        
+        SL = min(vL - aL, vR - aR)
+        SR = max(vL + aL, vR + aR)
+        
+        num = prR - prL + rL * vL * (SL - vL) - rR * vR * (SR - vR)
+        den = rL * (SL - vL) - rR * (SR - vR)
+        
+        if abs(den) < 1e-14:
+            S_star = 0.5 * (vL + vR)
+        else:
+            S_star = num / den
+            
+        if SL >= 0.0:
+            flux[i, 0] = fL1
+            flux[i, 1] = fL2
+            flux[i, 2] = fL3
+        elif S_star >= 0.0:
+            diff_L = SL - S_star
+            safe_diff_L = 1e-30 if abs(diff_L) < 1e-30 else diff_L
+            diff_SL_uL = SL - vL
+            safe_SL_uL = 1e-30 if abs(diff_SL_uL) < 1e-30 else diff_SL_uL
+            
+            factor_L = rL * diff_SL_uL / safe_diff_L
+            E_star_L = EL + (S_star - vL) * (S_star + prL / (rL * safe_SL_uL))
+            
+            u_star_L1 = factor_L
+            u_star_L2 = factor_L * S_star
+            u_star_L3 = factor_L * E_star_L
+            
+            flux[i, 0] = fL1 + SL * (u_star_L1 - rL)
+            flux[i, 1] = fL2 + SL * (u_star_L2 - rL * vL)
+            flux[i, 2] = fL3 + SL * (u_star_L3 - rL * EL)
+        elif SR >= 0.0:
+            diff_R = SR - S_star
+            safe_diff_R = 1e-30 if abs(diff_R) < 1e-30 else diff_R
+            diff_SR_uR = SR - vR
+            safe_SR_uR = 1e-30 if abs(diff_SR_uR) < 1e-30 else diff_SR_uR
+            
+            factor_R = rR * diff_SR_uR / safe_diff_R
+            E_star_R = ER + (S_star - vR) * (S_star + prR / (rR * safe_SR_uR))
+            
+            u_star_R1 = factor_R
+            u_star_R2 = factor_R * S_star
+            u_star_R3 = factor_R * E_star_R
+            
+            flux[i, 0] = fr1 + SR * (u_star_R1 - rR)
+            flux[i, 1] = fr2 + SR * (u_star_R2 - rR * vR)
+            flux[i, 2] = fr3 + SR * (u_star_R3 - rR * ER)
+        else:
+            flux[i, 0] = fr1
+            flux[i, 1] = fr2
+            flux[i, 2] = fr3
+            
+    return flux
+
+
+# ---------------------------------------------------------------------------
+# HLLC Numerical Flux: Real Gas (Numba)
+# ---------------------------------------------------------------------------
+
+@njit(fastmath=True)
+def compute_hllc_flux_real_numba(rhoL, rhoR, uL, uR, pL, pR,
+                                 eL, eR, aL_arr, aR_arr):
+    n = len(rhoL)
+    flux = np.empty((n, 3))
+    
+    for i in range(n):
+        rL = rhoL[i]
+        rR = rhoR[i]
+        vL = uL[i]
+        vR = uR[i]
+        prL = pL[i]
+        prR = pR[i]
+        enL = eL[i]
+        enR = eR[i]
+        aL = aL_arr[i]
+        aR = aR_arr[i]
+        
+        EL = enL + 0.5 * vL * vL
+        ER = enR + 0.5 * vR * vR
+        
+        fL1 = rL * vL
+        fL2 = rL * vL * vL + prL
+        fL3 = vL * (rL * EL + prL)
+        
+        fr1 = rR * vR
+        fr2 = rR * vR * vR + prR
+        fr3 = vR * (rR * ER + prR)
+        
+        SL = min(vL - aL, vR - aR)
+        SR = max(vL + aL, vR + aR)
+        
+        num = prR - prL + rL * vL * (SL - vL) - rR * vR * (SR - vR)
+        den = rL * (SL - vL) - rR * (SR - vR)
+        
+        if abs(den) < 1e-14:
+            S_star = 0.5 * (vL + vR)
+        else:
+            S_star = num / den
+            
+        if SL >= 0.0:
+            flux[i, 0] = fL1
+            flux[i, 1] = fL2
+            flux[i, 2] = fL3
+        elif S_star >= 0.0:
+            diff_L = SL - S_star
+            safe_diff_L = 1e-30 if abs(diff_L) < 1e-30 else diff_L
+            diff_SL_uL = SL - vL
+            safe_SL_uL = 1e-30 if abs(diff_SL_uL) < 1e-30 else diff_SL_uL
+            
+            factor_L = rL * diff_SL_uL / safe_diff_L
+            E_star_L = EL + (S_star - vL) * (S_star + prL / (rL * safe_SL_uL))
+            
+            u_star_L1 = factor_L
+            u_star_L2 = factor_L * S_star
+            u_star_L3 = factor_L * E_star_L
+            
+            flux[i, 0] = fL1 + SL * (u_star_L1 - rL)
+            flux[i, 1] = fL2 + SL * (u_star_L2 - rL * vL)
+            flux[i, 2] = fL3 + SL * (u_star_L3 - rL * EL)
+        elif SR >= 0.0:
+            diff_R = SR - S_star
+            safe_diff_R = 1e-30 if abs(diff_R) < 1e-30 else diff_R
+            diff_SR_uR = SR - vR
+            safe_SR_uR = 1e-30 if abs(diff_SR_uR) < 1e-30 else diff_SR_uR
+            
+            factor_R = rR * diff_SR_uR / safe_diff_R
+            E_star_R = ER + (S_star - vR) * (S_star + prR / (rR * safe_SR_uR))
+            
+            u_star_R1 = factor_R
+            u_star_R2 = factor_R * S_star
+            u_star_R3 = factor_R * E_star_R
+            
+            flux[i, 0] = fr1 + SR * (u_star_R1 - rR)
+            flux[i, 1] = fr2 + SR * (u_star_R2 - rR * vR)
+            flux[i, 2] = fr3 + SR * (u_star_R3 - rR * ER)
+        else:
+            flux[i, 0] = fr1
+            flux[i, 1] = fr2
+            flux[i, 2] = fr3
+            
+    return flux
+
+
+# ---------------------------------------------------------------------------
 # Residual Assembly & Solution Update (Numba)
 # ---------------------------------------------------------------------------
 
