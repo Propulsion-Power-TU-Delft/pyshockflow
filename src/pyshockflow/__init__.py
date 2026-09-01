@@ -3,7 +3,9 @@ from .fluid import FluidIdeal, FluidReal
 from .riemann_problem import RiemannProblem
 from .advection_roe import AdvectionRoeBase, AdvectionRoeArabi, AdvectionRoeVinokur
 from .advection_hllc import AdvectionHLLC
+from .advection_ausm import AdvectionAUSMplusUP
 from .hllc_vectorized import compute_hllc_flux_ideal, compute_hllc_flux_real
+from .ausm_vectorized import compute_ausm_flux_ideal, compute_ausm_flux_real
 from .driver import Driver
 
 __all__ = [
@@ -15,7 +17,10 @@ __all__ = [
     "AdvectionRoeArabi",
     "AdvectionRoeVinokur",
     "AdvectionHLLC",
+    "AdvectionAUSMplusUP",
     "compute_hllc_flux_ideal",
     "compute_hllc_flux_real",
+    "compute_ausm_flux_ideal",
+    "compute_ausm_flux_real",
     "Driver",
 ]

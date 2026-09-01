@@ -11,6 +11,7 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes, mark_inset
 solFile_1 = "Results/ideal_standard_NX_500/Results.pik"
 solFile_3 = "Results/real_arabi_NX_500/Results.pik"
 solFile_4 = "Results/real_hllc_NX_500/Results.pik"
+solFile_5 = "Results/real_ausm+up_NX_500/Results.pik"
 
 outFolder = 'Pictures'
 os.makedirs(outFolder, exist_ok=True)
@@ -26,16 +27,19 @@ with open(solFile_3, 'rb') as file:
     sol3 = pickle.load(file)
 with open(solFile_4, 'rb') as file:
     sol4 = pickle.load(file)
-
+with open(solFile_5, 'rb') as file:
+    sol5 = pickle.load(file)
 sols = [
     sol1, 
     sol3, 
-    sol4
+    sol4,
+    sol5
     ]
 labels = [
     'Standard Roe', 
     'Generalized Roe', 
-    'HLLC'
+    'HLLC',
+    'AUSM+up'
     ]
 
 fig, ax = plt.subplots(1, 3, figsize=(10, 3.5))
@@ -100,7 +104,7 @@ mark_inset(ax[2], inset2, loc1=2, loc2=4, fc="none", ec="0.5")
 for row in ax:
     row.set_xlabel(r'$x \ \rm{[m]}$')
     row.grid(alpha=.3)
-fig.legend(loc='upper center', bbox_to_anchor=(0.55, 1.1), ncol=4)
+fig.legend(loc='upper center', bbox_to_anchor=(0.55, 1.1), ncol=5)
 plt.tight_layout()
 plt.savefig(outFolder + '/co2.pdf', bbox_inches='tight')
 

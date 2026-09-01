@@ -597,6 +597,157 @@ def compute_hllc_flux_real_numba(rhoL, rhoR, uL, uR, pL, pR,
 
 
 # ---------------------------------------------------------------------------
+# AUSM+-up Numerical Flux: Ideal Gas (Numba)
+# ---------------------------------------------------------------------------
+
+@njit(fastmath=True)
+def compute_ausm_flux_ideal_numba(rhoL, rhoR, uL, uR, pL, pR, gmma,
+                                  Kp=0.25, Ku=0.75, sigma=1.0, beta=0.125):
+    n = len(rhoL)
+    flux = np.empty((n, 3))
+    gm1 = gmma - 1.0
+    
+    for i in range(n):
+        rL = rhoL[i]
+        rR = rhoR[i]
+        vL = uL[i]
+        vR = uR[i]
+        prL = pL[i]
+        prR = pR[i]
+        
+        enL = prL / (gm1 * rL)
+        enR = prR / (gm1 * rR)
+        aL = np.sqrt(gmma * prL / rL)
+        aR = np.sqrt(gmma * prR / rR)
+        
+        HL = enL + 0.5 * vL * vL + prL / rL
+        HR = enR + 0.5 * vR * vR + prR / rR
+        
+        a_half = 0.5 * (aL + aR)
+        ML = vL / a_half
+        MR = vR / a_half
+        
+        M_bar_sq = (vL * vL + vR * vR) / (2.0 * a_half * a_half)
+        dp_ratio = abs(prR - prL) / (prL + prR + 1e-30)
+        M0_sq = min(1.0, max(M_bar_sq, max(dp_ratio * dp_ratio, 1e-2)))
+        M0 = np.sqrt(M0_sq)
+        fa = max(M0 * (2.0 - M0), 0.1)
+        
+        alpha = (3.0 / 16.0) * (-4.0 + 5.0 * fa * fa)
+        
+        abs_ML = abs(ML)
+        if abs_ML <= 1.0:
+            M_plus = 0.25 * (ML + 1.0) * (ML + 1.0) + beta * (ML * ML - 1.0) * (ML * ML - 1.0)
+            P_plus = 0.25 * (ML + 1.0) * (ML + 1.0) * (2.0 - ML) + alpha * ML * (ML * ML - 1.0) * (ML * ML - 1.0)
+        else:
+            M_plus = 0.5 * (ML + abs_ML)
+            P_plus = 0.5 * (1.0 + (1.0 if ML > 0 else (-1.0 if ML < 0 else 0.0)))
+            
+        abs_MR = abs(MR)
+        if abs_MR <= 1.0:
+            M_minus = -0.25 * (MR - 1.0) * (MR - 1.0) - beta * (MR * MR - 1.0) * (MR * MR - 1.0)
+            P_minus = 0.25 * (MR - 1.0) * (MR - 1.0) * (2.0 + MR) - alpha * MR * (MR * MR - 1.0) * (MR * MR - 1.0)
+        else:
+            M_minus = 0.5 * (MR - abs_MR)
+            P_minus = 0.5 * (1.0 - (1.0 if MR > 0 else (-1.0 if MR < 0 else 0.0)))
+            
+        rho_half = 0.5 * (rL + rR)
+        Dp = (Kp / fa) * max(1.0 - sigma * M_bar_sq, 0.0) * (prR - prL) / (rho_half * a_half * a_half)
+        M_half = M_plus + M_minus - Dp
+        
+        Du = Ku * P_plus * P_minus * (rL + rR) * fa * a_half * (vR - vL)
+        p_half = P_plus * prL + P_minus * prR - Du
+        
+        if M_half >= 0.0:
+            m_dot = a_half * M_half * rL
+            flux[i, 0] = m_dot
+            flux[i, 1] = m_dot * vL + p_half
+            flux[i, 2] = m_dot * HL
+        else:
+            m_dot = a_half * M_half * rR
+            flux[i, 0] = m_dot
+            flux[i, 1] = m_dot * vR + p_half
+            flux[i, 2] = m_dot * HR
+            
+    return flux
+
+
+# ---------------------------------------------------------------------------
+# AUSM+-up Numerical Flux: Real Gas (Numba)
+# ---------------------------------------------------------------------------
+
+@njit(fastmath=True)
+def compute_ausm_flux_real_numba(rhoL, rhoR, uL, uR, pL, pR,
+                                 eL, eR, aL_arr, aR_arr,
+                                 Kp=0.25, Ku=0.75, sigma=1.0, beta=0.125):
+    n = len(rhoL)
+    flux = np.empty((n, 3))
+    
+    for i in range(n):
+        rL = rhoL[i]
+        rR = rhoR[i]
+        vL = uL[i]
+        vR = uR[i]
+        prL = pL[i]
+        prR = pR[i]
+        enL = eL[i]
+        enR = eR[i]
+        aL = aL_arr[i]
+        aR = aR_arr[i]
+        
+        HL = enL + 0.5 * vL * vL + prL / rL
+        HR = enR + 0.5 * vR * vR + prR / rR
+        
+        a_half = 0.5 * (aL + aR)
+        ML = vL / a_half
+        MR = vR / a_half
+        
+        M_bar_sq = (vL * vL + vR * vR) / (2.0 * a_half * a_half)
+        dp_ratio = abs(prR - prL) / (prL + prR + 1e-30)
+        M0_sq = min(1.0, max(M_bar_sq, max(dp_ratio * dp_ratio, 1e-2)))
+        M0 = np.sqrt(M0_sq)
+        fa = max(M0 * (2.0 - M0), 0.1)
+        
+        alpha = (3.0 / 16.0) * (-4.0 + 5.0 * fa * fa)
+        
+        abs_ML = abs(ML)
+        if abs_ML <= 1.0:
+            M_plus = 0.25 * (ML + 1.0) * (ML + 1.0) + beta * (ML * ML - 1.0) * (ML * ML - 1.0)
+            P_plus = 0.25 * (ML + 1.0) * (ML + 1.0) * (2.0 - ML) + alpha * ML * (ML * ML - 1.0) * (ML * ML - 1.0)
+        else:
+            M_plus = 0.5 * (ML + abs_ML)
+            P_plus = 0.5 * (1.0 + (1.0 if ML > 0 else (-1.0 if ML < 0 else 0.0)))
+            
+        abs_MR = abs(MR)
+        if abs_MR <= 1.0:
+            M_minus = -0.25 * (MR - 1.0) * (MR - 1.0) - beta * (MR * MR - 1.0) * (MR * MR - 1.0)
+            P_minus = 0.25 * (MR - 1.0) * (MR - 1.0) * (2.0 + MR) - alpha * MR * (MR * MR - 1.0) * (MR * MR - 1.0)
+        else:
+            M_minus = 0.5 * (MR - abs_MR)
+            P_minus = 0.5 * (1.0 - (1.0 if MR > 0 else (-1.0 if MR < 0 else 0.0)))
+            
+        rho_half = 0.5 * (rL + rR)
+        Dp = (Kp / fa) * max(1.0 - sigma * M_bar_sq, 0.0) * (prR - prL) / (rho_half * a_half * a_half)
+        M_half = M_plus + M_minus - Dp
+        
+        Du = Ku * P_plus * P_minus * (rL + rR) * fa * a_half * (vR - vL)
+        p_half = P_plus * prL + P_minus * prR - Du
+        
+        if M_half >= 0.0:
+            m_dot = a_half * M_half * rL
+            flux[i, 0] = m_dot
+            flux[i, 1] = m_dot * vL + p_half
+            flux[i, 2] = m_dot * HL
+        else:
+            m_dot = a_half * M_half * rR
+            flux[i, 0] = m_dot
+            flux[i, 1] = m_dot * vR + p_half
+            flux[i, 2] = m_dot * HR
+            
+    return flux
+
+
+# ---------------------------------------------------------------------------
 # Residual Assembly & Solution Update (Numba)
 # ---------------------------------------------------------------------------
 
