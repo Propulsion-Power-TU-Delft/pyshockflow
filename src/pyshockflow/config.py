@@ -229,5 +229,60 @@ class Config:
             return int(self.config_parser.get('OUTPUT', 'OUTPUT_FREQUENCY')) 
         except:
             return 250 # default value
-    
-    
+
+    def isLookupTableActive(self):
+        """Check whether 2D Look-Up Table (LuT) acceleration is enabled."""
+        for section in ('SIMULATION', 'FLUID'):
+            try:
+                res = str(self.config_parser.get(section, 'USE_LUT')).lower()
+                return res in ['yes', 'true', '1']
+            except Exception:
+                pass
+        return False
+
+    def getLookupTableGridSize(self):
+        """Return 2D grid resolution (nP, nT) for Look-Up Table (default: (250, 250), max: (1000, 1000))."""
+        for section in ('FLUID', 'SIMULATION'):
+            try:
+                res = str(self.config_parser.get(section, 'LUT_GRID_SIZE')).strip()
+                parts = [int(v.strip()) for v in res.split(',')]
+                if len(parts) == 1:
+                    val = min(1000, max(20, parts[0]))
+                    return (val, val)
+                nP = min(1000, max(20, parts[0]))
+                nT = min(1000, max(20, parts[1]))
+                return (nP, nT)
+            except Exception:
+                pass
+        return (250, 250)
+
+    def getLookupTablePressureRange(self):
+        """Return (P_min, P_max) in Pascals for Look-Up Table domain."""
+        for section in ('FLUID', 'SIMULATION'):
+            try:
+                p_min = float(self.config_parser.get(section, 'LUT_PRESSURE_MIN'))
+                p_max = float(self.config_parser.get(section, 'LUT_PRESSURE_MAX'))
+                return p_min, p_max
+            except Exception:
+                pass
+        # Default estimation from initial states
+        pL = self.getPressureLeft()
+        pR = self.getPressureRight()
+        return min(pL, pR) * 0.5, max(pL, pR) * 1.5
+
+    def getLookupTableTemperatureRange(self):
+        """Return (T_min, T_max) in Kelvin for Look-Up Table domain."""
+        for section in ('FLUID', 'SIMULATION'):
+            try:
+                T_min = float(self.config_parser.get(section, 'LUT_TEMPERATURE_MIN'))
+                T_max = float(self.config_parser.get(section, 'LUT_TEMPERATURE_MAX'))
+                return T_min, T_max
+            except Exception:
+                pass
+        # Default estimation for shock tube real fluids
+        try:
+            TL = self.getTemperatureLeft()
+            TR = self.getTemperatureRight()
+            return min(TL, TR) * 0.7, max(TL, TR) * 1.3
+        except Exception:
+            return 200.0, 2000.0

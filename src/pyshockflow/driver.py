@@ -13,6 +13,20 @@ from pyshockflow.math_utils import *
 from pyshockflow.roe_vectorized import (compute_roe_flux_ideal,
                                         compute_roe_flux_arabi,
                                         compute_roe_flux_vinokur)
+try:
+    from pyshockflow.kernels_numba import (
+        NUMBA_AVAILABLE,
+        compute_roe_flux_ideal_numba,
+        compute_roe_flux_arabi_numba,
+        compute_roe_flux_vinokur_numba,
+        apply_muscl_reconstruction_numba,
+        compute_residuals_numba,
+        update_solution_numba,
+        primitives_from_conservatives_ideal_numba
+    )
+except ImportError:
+    NUMBA_AVAILABLE = False
+
 
 
 class Driver:
@@ -84,7 +98,16 @@ class Driver:
         self.entropyFixActive = self.config.isEntropyFixActive()
         self.entropyFixCoefficient = self.config.getEntropyFixCoefficient()
         self._cached_sound_speed = None
-        
+
+        # Simulation scheme and limiter settings
+        self.numericalScheme = self.config.getNumericalScheme().lower()
+        self.isMusclActive = self.config.isMusclActive()
+        self.fluxLimiter = self.config.getFluxLimiter().lower()
+        limiter_map = {'van albada': 0, 'van leer': 1, 'min-mod': 2, 'superbee': 3, 'none': 4}
+        self.limiterCode = limiter_map.get(self.fluxLimiter, 0)
+        self.simulationType = self.config.getSimulationType().lower()
+        self.outputFrequency = self.config.getOutputFrequency()
+
         # Boundary Conditions
         self.boundaryType = self.config.getBoundaryConditions()    
         print("Boundary Conditions Left:                    %s" %self.boundaryType[0])
@@ -107,6 +130,15 @@ class Driver:
         if self.fluidModel.lower()=='ideal':
             print("Fluid cp/cv ratio [-]:                       %.6e" %self.gmma)
             print("Fluid gas constant [J/kgK]:                  %.6e" %self.Rgas)
+        elif self.config.isLookupTableActive():
+            p_min, p_max = self.config.getLookupTablePressureRange()
+            T_min, T_max = self.config.getLookupTableTemperatureRange()
+            nP, nT = self.config.getLookupTableGridSize()
+            print("Look-Up Table (LuT):                         Enabled")
+            print("  Pressure range [Pa]:                       [%.3e, %.3e]" % (p_min, p_max))
+            print("  Temperature range [K]:                     [%.2f, %.2f]" % (T_min, T_max))
+            print("  Grid resolution:                           %i x %i" % (nP, nT))
+            self.fluid.enable_lookup_table(p_min, p_max, T_min, T_max, nP=nP, nT=nT)
         
         self.instantiatePrimitiveArrays()
         self.instantiateConservativeArrays()
@@ -601,42 +633,55 @@ class Driver:
     
     
     def computeResiduals(self, primitives, dt):
-        availableLimiters = ['van albada', 'van leer', 'min-mod', 'superbee', 'none']
-        
-        limiter = self.config.getFluxLimiter()
-        if limiter not in availableLimiters:
-            raise ValueError(f'Limiter not recognized! Available ones are: {availableLimiters}')
-        
-        advectionScheme = self.config.getNumericalScheme()
-        MUSCL = self.config.isMusclActive()
-        
         # compute advection fluxes on every internal interface. Per unit area
-        if advectionScheme.lower() == 'godunov':
-            # Keep scalar path for Godunov (to be optimized separately)
+        if self.numericalScheme == 'godunov':
             flux = np.zeros((self.nNodes+1, 3))
             for iFace in range(flux.shape[0]):
-                flux[iFace, :] = self.computeFluxVector(iFace, iFace+1, primitives, dt, advectionScheme, MUSCL, limiter)
+                flux[iFace, :] = self.computeFluxVector(iFace, iFace+1, primitives, dt, self.numericalScheme, self.isMusclActive, self.fluxLimiter)
         else:
-            flux = self._computeFluxVectorized(primitives, advectionScheme, MUSCL, limiter)
+            flux = self._computeFluxVectorized(primitives, self.numericalScheme, self.isMusclActive, self.fluxLimiter)
         
         # compute volumetric source terms, per unit volume
         source = self.computeSourceTerms(primitives)
         
-        # assemble the full residual vector on every physical node (vectorized)
-        dV_int = self.dV[1:-1, np.newaxis]  # (nNodes, 1) for broadcasting
+        # assemble the full residual vector on every physical node (Numba accelerated)
+        if NUMBA_AVAILABLE:
+            return compute_residuals_numba(flux, source, self.dV, dt, self.areaReference)
+            
+        dV_int = self.dV[1:-1, np.newaxis]
         residuals = (dt / dV_int) * ((flux[:-1, :] - flux[1:, :]) * self.areaReference + source[1:-1, :] * dV_int)
         return residuals
 
     
     def updateSolution(self, residuals):
-        self.solutionConservative['u1'][1:-1] += residuals[:,0]
-        self.solutionConservative['u2'][1:-1] += residuals[:,1]
-        self.solutionConservative['u3'][1:-1] += residuals[:,2]
+        if NUMBA_AVAILABLE:
+            update_solution_numba(
+                self.solutionConservative['u1'],
+                self.solutionConservative['u2'],
+                self.solutionConservative['u3'],
+                residuals
+            )
+        else:
+            self.solutionConservative['u1'][1:-1] += residuals[:,0]
+            self.solutionConservative['u2'][1:-1] += residuals[:,1]
+            self.solutionConservative['u3'][1:-1] += residuals[:,2]
         self.updatePrimitivesFromConservatives()
     
     def updatePrimitivesFromConservatives(self):
-        self.solutionPrimitive['Density'][1:-1], self.solutionPrimitive['Velocity'][1:-1], self.solutionPrimitive['Pressure'][1:-1], self.solutionPrimitive['Energy'][1:-1] = \
-                getPrimitivesFromConservatives(self.solutionConservative['u1'][1:-1], self.solutionConservative['u2'][1:-1], self.solutionConservative['u3'][1:-1], self.fluid)
+        if NUMBA_AVAILABLE and self.fluidModel == 'ideal':
+            primitives_from_conservatives_ideal_numba(
+                self.solutionConservative['u1'],
+                self.solutionConservative['u2'],
+                self.solutionConservative['u3'],
+                self.fluid.gmma,
+                self.solutionPrimitive['Density'],
+                self.solutionPrimitive['Velocity'],
+                self.solutionPrimitive['Pressure'],
+                self.solutionPrimitive['Energy']
+            )
+        else:
+            self.solutionPrimitive['Density'][1:-1], self.solutionPrimitive['Velocity'][1:-1], self.solutionPrimitive['Pressure'][1:-1], self.solutionPrimitive['Energy'][1:-1] = \
+                    getPrimitivesFromConservatives(self.solutionConservative['u1'][1:-1], self.solutionConservative['u2'][1:-1], self.solutionConservative['u3'][1:-1], self.fluid)
         
 
     def computeTimeStep(self, primitive):
@@ -644,6 +689,8 @@ class Driver:
         speedOfSound = self.fluid.computeSoundSpeed_p_rho(primitive['Pressure'][1:-1], primitive['Density'][1:-1])
         dtMax = np.min(self.dx[1:-1] * self.cflMax / (np.abs(velocity) + speedOfSound))
         return dtMax
+
+
     
     
     def writeSolution(self, it, time):    
@@ -955,6 +1002,11 @@ class Driver:
                     'Basic Roe scheme is not available for real gas model. '
                     'Select Roe_Arabi or Roe_Vinokur, depending on the Roe '
                     'Avg procedure that you want.')
+            if NUMBA_AVAILABLE:
+                return compute_roe_flux_ideal_numba(
+                    rhoL, rhoR, uL, uR, pL, pR,
+                    self.fluid.gmma,
+                    self.entropyFixActive, self.entropyFixCoefficient)
             return compute_roe_flux_ideal(
                 rhoL, rhoR, uL, uR, pL, pR,
                 self.fluid.gmma,
@@ -978,6 +1030,11 @@ class Driver:
                 eR_arr, aR_arr = self.fluid.compute_e_and_a_p_rho(pR, rhoR)
                 self._cached_sound_speed = None
 
+            if NUMBA_AVAILABLE:
+                return compute_roe_flux_arabi_numba(
+                    rhoL, rhoR, uL, uR, pL, pR,
+                    eL_arr, eR_arr, aL_arr, aR_arr,
+                    self.entropyFixActive, self.entropyFixCoefficient)
             return compute_roe_flux_arabi(
                 rhoL, rhoR, uL, uR, pL, pR,
                 eL_arr, eR_arr, aL_arr, aR_arr,
@@ -1013,6 +1070,13 @@ class Driver:
                 rho_mean = 0.5 * (rhoL + rhoR)
                 _, chiM_arr, kappaM_arr = self.fluid.compute_e_and_chi_kappa_p_rho(p_mean, rho_mean)
 
+            if NUMBA_AVAILABLE:
+                return compute_roe_flux_vinokur_numba(
+                    rhoL, rhoR, uL, uR, pL, pR,
+                    eL_arr, eR_arr,
+                    chiL_arr, chiR_arr, chiM_arr,
+                    kappaL_arr, kappaR_arr, kappaM_arr,
+                    self.entropyFixActive, self.entropyFixCoefficient)
             return compute_roe_flux_vinokur(
                 rhoL, rhoR, uL, uR, pL, pR,
                 eL_arr, eR_arr,
@@ -1025,31 +1089,29 @@ class Driver:
 
     def _applyMusclReconstructionVectorized(self, primitives, rhoL, rhoR,
                                             uL, uR, pL, pR, limiter):
-        """Apply MUSCL reconstruction to interior faces, modifying L/R arrays in-place.
-
-        The original per-face loop with temporary 3-element allocations is
-        replaced by slicing the full primitive arrays into stencil arrays and
-        computing all limiters at once.
-        """
-        rho = primitives['Density']
-        u   = primitives['Velocity']
-        p   = primitives['Pressure']
-        # xNodes uses the physical grid (same indexing as original code)
-        x = self.xNodes
-
-        # MUSCL condition: il > 2 and ir < nNodesHalo - 3
-        # => face index iFace in [3, nNodes - 3]
+        """Apply MUSCL reconstruction to interior faces, modifying L/R arrays in-place."""
         ms = 3                       # first MUSCL face
         me = self.nNodes - 3         # last MUSCL face (inclusive)
 
         if ms > me:
             return  # grid too small for MUSCL stencil
 
+        if NUMBA_AVAILABLE:
+            apply_muscl_reconstruction_numba(
+                primitives['Density'], primitives['Velocity'], primitives['Pressure'],
+                self.xNodes, ms, me,
+                rhoL, uL, pL, rhoR, uR, pR,
+                self.limiterCode
+            )
+            return
+
         nMuscl = me - ms + 1
+        x = self.xNodes
+        rho = primitives['Density']
+        u   = primitives['Velocity']
+        p   = primitives['Pressure']
 
         # Stencil slices into the halo-inclusive arrays (size nNodesHalo)
-        # face iFace => il=iFace, ir=iFace+1
-        # stencil: il-1, il, ir, ir+1 = iFace-1 .. iFace+2
         s0 = ms - 1                  # start of il-1 range
         U_lm = np.column_stack([rho[s0       : s0 + nMuscl],
                                 u[s0         : s0 + nMuscl],
@@ -1063,6 +1125,7 @@ class Driver:
         U_rp = np.column_stack([rho[s0 + 3   : s0 + 3 + nMuscl],
                                 u[s0 + 3     : s0 + 3 + nMuscl],
                                 p[s0 + 3     : s0 + 3 + nMuscl]])
+
 
         # Grid spacing (uses self.xNodes — matches the original code)
         dx_lm_l = x[ms     : me + 1] - x[ms - 1 : me]        # x[il]-x[il-1]

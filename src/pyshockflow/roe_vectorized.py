@@ -312,7 +312,7 @@ def compute_roe_flux_vinokur(rhoL, rhoR, uL, uR, pL, pR,
         kappaHat,
         (D_term * kappaHat) / safe_denom)
 
-    aAVG = np.sqrt(chiAVG + kappaAVG * hAVG)
+    aAVG = np.sqrt(np.maximum(1e-10, chiAVG + kappaAVG * hAVG))
 
     # Conservative-variable jumps
     u3L = rhoL * (0.5 * uL ** 2 + eL)
