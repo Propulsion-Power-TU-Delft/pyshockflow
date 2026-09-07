@@ -384,16 +384,18 @@ class RiemannProblem:
         t0 = 0
         p = np.linspace(0, 10, 100)
 
-        plt.figure(figsize=(4, 2.75))
+        from pyshockflow.thesis_plots import set_thesis_style, create_figure
+        set_thesis_style()
+        fig, ax = create_figure(fraction=0.32, aspect_ratio=1.3, subplots=(1, 1), is_print=False)
 
         # contact wave
         alpha = np.arctan2(1 , self.uStar)
-        plt.plot(x0 + np.cos(alpha) * p, t0 + np.sin(alpha) * p, '--k', label='Contact wave')
+        ax.plot(x0 + np.cos(alpha) * p, t0 + np.sin(alpha) * p, '--k', label='Contact wave')
 
         # left wave
         if self.left_wave == 'shock':
             alpha = np.arctan2(1, self.Sl)
-            plt.plot(x0+np.cos(alpha)*p, t0+np.sin(alpha)*p, 'C0', label='Shock')
+            ax.plot(x0+np.cos(alpha)*p, t0+np.sin(alpha)*p, 'C0', label='Shock')
         else:
             alpha1 = np.arctan2(1, self.Shl)
             alpha2 = np.arctan2(1, self.Stl)
@@ -401,16 +403,16 @@ class RiemannProblem:
             for alpha in alphas:
                 xt, yt = x0 + np.cos(alpha) * p, t0 + np.sin(alpha) * p
                 if alpha==alphas[0]:
-                    plt.plot(xt, yt, 'C0', label='Rarefaction')
+                    ax.plot(xt, yt, 'C0', label='Rarefaction')
                 elif alpha==alphas[-1]:
-                    plt.plot(xt, yt, 'C0')
+                    ax.plot(xt, yt, 'C0')
                 else:
-                    plt.plot(xt, yt, 'C0', lw=0.75)
+                    ax.plot(xt, yt, 'C0', lw=0.75)
 
         # right wave
         if self.right_wave == 'shock':
             alpha = np.arctan2(1, self.Sr)
-            plt.plot(x0 + np.cos(alpha) * p, t0 + np.sin(alpha) * p, 'C1', label='Shock')
+            ax.plot(x0 + np.cos(alpha) * p, t0 + np.sin(alpha) * p, 'C1', label='Shock')
         else:
             alpha1 = np.arctan2(1, self.Shr)
             alpha2 = np.arctan2(1, self.Str)
@@ -418,22 +420,22 @@ class RiemannProblem:
             for alpha in alphas:
                 xt, yt = x0 + np.cos(alpha) * p, t0 + np.sin(alpha) * p
                 if alpha == alphas[0]:
-                    plt.plot(xt, yt, 'C1', label='Rarefaction')
+                    ax.plot(xt, yt, 'C1', label='Rarefaction')
                 elif alpha == alphas[-1]:
-                    plt.plot(xt, yt, 'C1')
+                    ax.plot(xt, yt, 'C1')
                 else:
-                    plt.plot(xt, yt, 'C1', lw=0.75)
+                    ax.plot(xt, yt, 'C1', lw=0.75)
 
         # plt.gca().set_aspect('equal', adjustable='box')
         # plt.legend()
-        plt.xlabel(r'$x$')
-        plt.ylabel(r'$t$')
+        ax.set_xlabel(r'$x$')
+        ax.set_ylabel(r'$t$')
         # plt.xticks([])
         # plt.yticks([])
-        plt.grid(alpha=0.3)
+        ax.grid(alpha=0.3)
         if file_name is not None and folder_name is not None:
             os.makedirs(folder_name, exist_ok=True)
-            plt.savefig(folder_name + '/' + file_name + '_wave_struct.pdf', bbox_inches='tight')
+            fig.savefig(folder_name + '/' + file_name + '_wave_struct.pdf')
     
     def saveSolution(self, folder_name, file_name):
         """

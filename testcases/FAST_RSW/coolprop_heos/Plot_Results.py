@@ -10,15 +10,14 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 # INPUT
 inputPkls = [
-                'Results/test_coolprop_hllc_NX_100/Results.pik',
-                'Results/test_coolprop_NX_250/Results.pik',
-                'Results/test_coolprop_NX_500/Results.pik',
-                'Results/test_coolprop_NX_1000/Results.pik',
+                'Results/rsw_propagation_NX_100/Results.pik',
+                'Results/rsw_propagation_NX_500/Results.pik',
+                'Results/rsw_propagation_NX_1000/Results.pik',
             ]
 labels = [
             '100',
-            '250', 
             '500',
+            '1000'
             ]
 
 linestyles = ['--', '-.', ':']

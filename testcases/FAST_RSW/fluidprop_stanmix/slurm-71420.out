@@ -1,0 +1,1162 @@
+/usr/bin/which: no zip in (/home/fneri/miniconda3/envs/pyshockflow/bin:/home/fneri/miniconda3/condabin:/home/fneri/CTurboBFM/bin:/home/fneri/CTurboBFM/python:/home/fneri/.local/bin:/home/fneri/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/home/fneri/SU2/build/SU2_CFD/src)
+Running simulation for input_100.ini...
+The simulation proceeds with default topology: constant area
+Boundary Conditions Left:                    reflective
+Boundary Conditions Right:                   transparent
+================================================================================
+
+================================================================================
+                         🚀  WELCOME TO PYSHOCKTUBE 🚀
+                  Fluid Dynamics Simulation for Shock Tubes
+================================================================================
+
+================================================================================
+                                SIMULATION DATA
+Length of the domain [m]:                    2.000000e+00
+Number of points:                            100
+Final time instant [s]:                      1.500000e-02
+Fluid name:                                  D6
+Fluid treatment:                             real
+Initial L/R density values [kg/m3]:          (1.881900e+02, 1.272700e+02)
+Initial L/R velocity values [m/s]:           (0.000000e+00, 1.678000e+01)
+Initial L/R pressure values [Pa]:            (9.122000e+05, 8.017000e+05)
+Initial L/R temperature values [K]:          (6.421064e+02, 6.368527e+02)
+Initial L/R energy values [J/kg]:            (5.335693e+05, 5.310469e+05)
+
+================================================================================
+                                 START SOLVER
+Numerical flux method: roe_arabi
+MUSCL reconstruction: False
+Entropy fix active: True
+Real Gas model, library: StanMix
+Entropy fix coefficient: 0.02
+================================================================================
+
+Iteration: 1, Progress in Time 1.575 %
+Iteration: 2, Progress in Time 3.148 %
+Iteration: 3, Progress in Time 4.720 %
+Iteration: 4, Progress in Time 6.291 %
+Iteration: 5, Progress in Time 7.862 %
+Iteration: 6, Progress in Time 9.433 %
+Iteration: 7, Progress in Time 11.003 %
+Iteration: 8, Progress in Time 12.573 %
+Iteration: 9, Progress in Time 14.143 %
+Iteration: 10, Progress in Time 15.713 %
+Iteration: 11, Progress in Time 17.282 %
+Iteration: 12, Progress in Time 18.852 %
+Iteration: 13, Progress in Time 20.421 %
+Iteration: 14, Progress in Time 21.990 %
+Iteration: 15, Progress in Time 23.560 %
+Iteration: 16, Progress in Time 25.129 %
+Iteration: 17, Progress in Time 26.699 %
+Iteration: 18, Progress in Time 28.268 %
+Iteration: 19, Progress in Time 29.837 %
+Iteration: 20, Progress in Time 31.407 %
+Iteration: 21, Progress in Time 32.976 %
+Iteration: 22, Progress in Time 34.546 %
+Iteration: 23, Progress in Time 36.115 %
+Iteration: 24, Progress in Time 37.685 %
+Iteration: 25, Progress in Time 39.255 %
+Iteration: 26, Progress in Time 40.824 %
+Iteration: 27, Progress in Time 42.394 %
+Iteration: 28, Progress in Time 43.963 %
+Iteration: 29, Progress in Time 45.533 %
+Iteration: 30, Progress in Time 47.102 %
+Iteration: 31, Progress in Time 48.672 %
+Iteration: 32, Progress in Time 50.242 %
+Iteration: 33, Progress in Time 51.811 %
+Iteration: 34, Progress in Time 53.381 %
+Iteration: 35, Progress in Time 54.951 %
+Iteration: 36, Progress in Time 56.520 %
+Iteration: 37, Progress in Time 58.090 %
+Iteration: 38, Progress in Time 59.659 %
+Iteration: 39, Progress in Time 61.229 %
+Iteration: 40, Progress in Time 62.799 %
+Iteration: 41, Progress in Time 64.368 %
+Iteration: 42, Progress in Time 65.938 %
+Iteration: 43, Progress in Time 67.508 %
+Iteration: 44, Progress in Time 69.077 %
+Iteration: 45, Progress in Time 70.647 %
+Iteration: 46, Progress in Time 72.217 %
+Iteration: 47, Progress in Time 73.786 %
+Iteration: 48, Progress in Time 75.356 %
+Iteration: 49, Progress in Time 76.926 %
+Iteration: 50, Progress in Time 78.496 %
+Iteration: 51, Progress in Time 80.065 %
+Iteration: 52, Progress in Time 81.635 %
+Iteration: 53, Progress in Time 83.205 %
+Iteration: 54, Progress in Time 84.774 %
+Iteration: 55, Progress in Time 86.344 %
+Iteration: 56, Progress in Time 87.914 %
+Iteration: 57, Progress in Time 89.483 %
+Iteration: 58, Progress in Time 91.053 %
+Iteration: 59, Progress in Time 92.623 %
+Iteration: 60, Progress in Time 94.193 %
+Iteration: 61, Progress in Time 95.762 %
+Iteration: 62, Progress in Time 97.332 %
+Iteration: 63, Progress in Time 98.902 %
+Iteration: 64, Progress in Time 100.000 %
+                                  END SOLVER
+================================================================================
+                         FINAL ASSEMBLY OF THE RESULTS
+Regrouping all the results in a single file...
+Reading File 1 of 2
+Reading File 2 of 2
+Replacing all individual files with a single pickle (this could take a while) ...
+Regrouped all the times in a single file: Results/rsw_propagation_NX_100_2/Results.pik
+                                  END ASSEMBLER
+================================================================================
+Running simulation for input_500.ini...
+The simulation proceeds with default topology: constant area
+Boundary Conditions Left:                    reflective
+Boundary Conditions Right:                   transparent
+================================================================================
+
+================================================================================
+                         🚀  WELCOME TO PYSHOCKTUBE 🚀
+                  Fluid Dynamics Simulation for Shock Tubes
+================================================================================
+
+================================================================================
+                                SIMULATION DATA
+Length of the domain [m]:                    2.000000e+00
+Number of points:                            500
+Final time instant [s]:                      1.500000e-02
+Fluid name:                                  D6
+Fluid treatment:                             real
+Initial L/R density values [kg/m3]:          (1.881900e+02, 1.272700e+02)
+Initial L/R velocity values [m/s]:           (0.000000e+00, 1.678000e+01)
+Initial L/R pressure values [Pa]:            (9.122000e+05, 8.017000e+05)
+Initial L/R temperature values [K]:          (6.421064e+02, 6.368527e+02)
+Initial L/R energy values [J/kg]:            (5.335693e+05, 5.310469e+05)
+
+================================================================================
+                                 START SOLVER
+Numerical flux method: roe_arabi
+MUSCL reconstruction: False
+Entropy fix active: True
+Real Gas model, library: StanMix
+Entropy fix coefficient: 0.02
+================================================================================
+
+Iteration: 1, Progress in Time 0.312 %
+Iteration: 2, Progress in Time 0.625 %
+Iteration: 3, Progress in Time 0.936 %
+Iteration: 4, Progress in Time 1.248 %
+Iteration: 5, Progress in Time 1.560 %
+Iteration: 6, Progress in Time 1.871 %
+Iteration: 7, Progress in Time 2.183 %
+Iteration: 8, Progress in Time 2.495 %
+Iteration: 9, Progress in Time 2.806 %
+Iteration: 10, Progress in Time 3.117 %
+Iteration: 11, Progress in Time 3.429 %
+Iteration: 12, Progress in Time 3.740 %
+Iteration: 13, Progress in Time 4.051 %
+Iteration: 14, Progress in Time 4.363 %
+Iteration: 15, Progress in Time 4.674 %
+Iteration: 16, Progress in Time 4.986 %
+Iteration: 17, Progress in Time 5.297 %
+Iteration: 18, Progress in Time 5.608 %
+Iteration: 19, Progress in Time 5.920 %
+Iteration: 20, Progress in Time 6.231 %
+Iteration: 21, Progress in Time 6.542 %
+Iteration: 22, Progress in Time 6.854 %
+Iteration: 23, Progress in Time 7.165 %
+Iteration: 24, Progress in Time 7.477 %
+Iteration: 25, Progress in Time 7.788 %
+Iteration: 26, Progress in Time 8.099 %
+Iteration: 27, Progress in Time 8.411 %
+Iteration: 28, Progress in Time 8.722 %
+Iteration: 29, Progress in Time 9.034 %
+Iteration: 30, Progress in Time 9.345 %
+Iteration: 31, Progress in Time 9.656 %
+Iteration: 32, Progress in Time 9.968 %
+Iteration: 33, Progress in Time 10.279 %
+Iteration: 34, Progress in Time 10.591 %
+Iteration: 35, Progress in Time 10.902 %
+Iteration: 36, Progress in Time 11.213 %
+Iteration: 37, Progress in Time 11.525 %
+Iteration: 38, Progress in Time 11.836 %
+Iteration: 39, Progress in Time 12.148 %
+Iteration: 40, Progress in Time 12.459 %
+Iteration: 41, Progress in Time 12.770 %
+Iteration: 42, Progress in Time 13.082 %
+Iteration: 43, Progress in Time 13.393 %
+Iteration: 44, Progress in Time 13.705 %
+Iteration: 45, Progress in Time 14.016 %
+Iteration: 46, Progress in Time 14.328 %
+Iteration: 47, Progress in Time 14.639 %
+Iteration: 48, Progress in Time 14.950 %
+Iteration: 49, Progress in Time 15.262 %
+Iteration: 50, Progress in Time 15.573 %
+Iteration: 51, Progress in Time 15.885 %
+Iteration: 52, Progress in Time 16.196 %
+Iteration: 53, Progress in Time 16.508 %
+Iteration: 54, Progress in Time 16.819 %
+Iteration: 55, Progress in Time 17.130 %
+Iteration: 56, Progress in Time 17.442 %
+Iteration: 57, Progress in Time 17.753 %
+Iteration: 58, Progress in Time 18.065 %
+Iteration: 59, Progress in Time 18.376 %
+Iteration: 60, Progress in Time 18.688 %
+Iteration: 61, Progress in Time 18.999 %
+Iteration: 62, Progress in Time 19.310 %
+Iteration: 63, Progress in Time 19.622 %
+Iteration: 64, Progress in Time 19.933 %
+Iteration: 65, Progress in Time 20.245 %
+Iteration: 66, Progress in Time 20.556 %
+Iteration: 67, Progress in Time 20.868 %
+Iteration: 68, Progress in Time 21.179 %
+Iteration: 69, Progress in Time 21.490 %
+Iteration: 70, Progress in Time 21.802 %
+Iteration: 71, Progress in Time 22.113 %
+Iteration: 72, Progress in Time 22.425 %
+Iteration: 73, Progress in Time 22.736 %
+Iteration: 74, Progress in Time 23.048 %
+Iteration: 75, Progress in Time 23.359 %
+Iteration: 76, Progress in Time 23.670 %
+Iteration: 77, Progress in Time 23.982 %
+Iteration: 78, Progress in Time 24.293 %
+Iteration: 79, Progress in Time 24.605 %
+Iteration: 80, Progress in Time 24.916 %
+Iteration: 81, Progress in Time 25.228 %
+Iteration: 82, Progress in Time 25.539 %
+Iteration: 83, Progress in Time 25.850 %
+Iteration: 84, Progress in Time 26.162 %
+Iteration: 85, Progress in Time 26.473 %
+Iteration: 86, Progress in Time 26.785 %
+Iteration: 87, Progress in Time 27.096 %
+Iteration: 88, Progress in Time 27.408 %
+Iteration: 89, Progress in Time 27.719 %
+Iteration: 90, Progress in Time 28.030 %
+Iteration: 91, Progress in Time 28.342 %
+Iteration: 92, Progress in Time 28.653 %
+Iteration: 93, Progress in Time 28.965 %
+Iteration: 94, Progress in Time 29.276 %
+Iteration: 95, Progress in Time 29.588 %
+Iteration: 96, Progress in Time 29.899 %
+Iteration: 97, Progress in Time 30.211 %
+Iteration: 98, Progress in Time 30.522 %
+Iteration: 99, Progress in Time 30.833 %
+Iteration: 100, Progress in Time 31.145 %
+Iteration: 101, Progress in Time 31.456 %
+Iteration: 102, Progress in Time 31.768 %
+Iteration: 103, Progress in Time 32.079 %
+Iteration: 104, Progress in Time 32.391 %
+Iteration: 105, Progress in Time 32.702 %
+Iteration: 106, Progress in Time 33.013 %
+Iteration: 107, Progress in Time 33.325 %
+Iteration: 108, Progress in Time 33.636 %
+Iteration: 109, Progress in Time 33.948 %
+Iteration: 110, Progress in Time 34.259 %
+Iteration: 111, Progress in Time 34.571 %
+Iteration: 112, Progress in Time 34.882 %
+Iteration: 113, Progress in Time 35.194 %
+Iteration: 114, Progress in Time 35.505 %
+Iteration: 115, Progress in Time 35.816 %
+Iteration: 116, Progress in Time 36.128 %
+Iteration: 117, Progress in Time 36.439 %
+Iteration: 118, Progress in Time 36.751 %
+Iteration: 119, Progress in Time 37.062 %
+Iteration: 120, Progress in Time 37.374 %
+Iteration: 121, Progress in Time 37.685 %
+Iteration: 122, Progress in Time 37.997 %
+Iteration: 123, Progress in Time 38.308 %
+Iteration: 124, Progress in Time 38.619 %
+Iteration: 125, Progress in Time 38.931 %
+Iteration: 126, Progress in Time 39.242 %
+Iteration: 127, Progress in Time 39.554 %
+Iteration: 128, Progress in Time 39.865 %
+Iteration: 129, Progress in Time 40.177 %
+Iteration: 130, Progress in Time 40.488 %
+Iteration: 131, Progress in Time 40.800 %
+Iteration: 132, Progress in Time 41.111 %
+Iteration: 133, Progress in Time 41.422 %
+Iteration: 134, Progress in Time 41.734 %
+Iteration: 135, Progress in Time 42.045 %
+Iteration: 136, Progress in Time 42.357 %
+Iteration: 137, Progress in Time 42.668 %
+Iteration: 138, Progress in Time 42.980 %
+Iteration: 139, Progress in Time 43.291 %
+Iteration: 140, Progress in Time 43.603 %
+Iteration: 141, Progress in Time 43.914 %
+Iteration: 142, Progress in Time 44.225 %
+Iteration: 143, Progress in Time 44.537 %
+Iteration: 144, Progress in Time 44.848 %
+Iteration: 145, Progress in Time 45.160 %
+Iteration: 146, Progress in Time 45.471 %
+Iteration: 147, Progress in Time 45.783 %
+Iteration: 148, Progress in Time 46.094 %
+Iteration: 149, Progress in Time 46.406 %
+Iteration: 150, Progress in Time 46.717 %
+Iteration: 151, Progress in Time 47.028 %
+Iteration: 152, Progress in Time 47.340 %
+Iteration: 153, Progress in Time 47.651 %
+Iteration: 154, Progress in Time 47.963 %
+Iteration: 155, Progress in Time 48.274 %
+Iteration: 156, Progress in Time 48.586 %
+Iteration: 157, Progress in Time 48.897 %
+Iteration: 158, Progress in Time 49.209 %
+Iteration: 159, Progress in Time 49.520 %
+Iteration: 160, Progress in Time 49.831 %
+Iteration: 161, Progress in Time 50.143 %
+Iteration: 162, Progress in Time 50.454 %
+Iteration: 163, Progress in Time 50.766 %
+Iteration: 164, Progress in Time 51.077 %
+Iteration: 165, Progress in Time 51.389 %
+Iteration: 166, Progress in Time 51.700 %
+Iteration: 167, Progress in Time 52.012 %
+Iteration: 168, Progress in Time 52.323 %
+Iteration: 169, Progress in Time 52.634 %
+Iteration: 170, Progress in Time 52.946 %
+Iteration: 171, Progress in Time 53.257 %
+Iteration: 172, Progress in Time 53.569 %
+Iteration: 173, Progress in Time 53.880 %
+Iteration: 174, Progress in Time 54.192 %
+Iteration: 175, Progress in Time 54.503 %
+Iteration: 176, Progress in Time 54.815 %
+Iteration: 177, Progress in Time 55.126 %
+Iteration: 178, Progress in Time 55.437 %
+Iteration: 179, Progress in Time 55.749 %
+Iteration: 180, Progress in Time 56.060 %
+Iteration: 181, Progress in Time 56.372 %
+Iteration: 182, Progress in Time 56.683 %
+Iteration: 183, Progress in Time 56.995 %
+Iteration: 184, Progress in Time 57.306 %
+Iteration: 185, Progress in Time 57.618 %
+Iteration: 186, Progress in Time 57.929 %
+Iteration: 187, Progress in Time 58.241 %
+Iteration: 188, Progress in Time 58.552 %
+Iteration: 189, Progress in Time 58.863 %
+Iteration: 190, Progress in Time 59.175 %
+Iteration: 191, Progress in Time 59.486 %
+Iteration: 192, Progress in Time 59.798 %
+Iteration: 193, Progress in Time 60.109 %
+Iteration: 194, Progress in Time 60.421 %
+Iteration: 195, Progress in Time 60.732 %
+Iteration: 196, Progress in Time 61.044 %
+Iteration: 197, Progress in Time 61.355 %
+Iteration: 198, Progress in Time 61.666 %
+Iteration: 199, Progress in Time 61.978 %
+Iteration: 200, Progress in Time 62.289 %
+Iteration: 201, Progress in Time 62.601 %
+Iteration: 202, Progress in Time 62.912 %
+Iteration: 203, Progress in Time 63.224 %
+Iteration: 204, Progress in Time 63.535 %
+Iteration: 205, Progress in Time 63.847 %
+Iteration: 206, Progress in Time 64.158 %
+Iteration: 207, Progress in Time 64.470 %
+Iteration: 208, Progress in Time 64.781 %
+Iteration: 209, Progress in Time 65.092 %
+Iteration: 210, Progress in Time 65.404 %
+Iteration: 211, Progress in Time 65.715 %
+Iteration: 212, Progress in Time 66.027 %
+Iteration: 213, Progress in Time 66.338 %
+Iteration: 214, Progress in Time 66.650 %
+Iteration: 215, Progress in Time 66.961 %
+Iteration: 216, Progress in Time 67.273 %
+Iteration: 217, Progress in Time 67.584 %
+Iteration: 218, Progress in Time 67.895 %
+Iteration: 219, Progress in Time 68.207 %
+Iteration: 220, Progress in Time 68.518 %
+Iteration: 221, Progress in Time 68.830 %
+Iteration: 222, Progress in Time 69.141 %
+Iteration: 223, Progress in Time 69.453 %
+Iteration: 224, Progress in Time 69.764 %
+Iteration: 225, Progress in Time 70.076 %
+Iteration: 226, Progress in Time 70.387 %
+Iteration: 227, Progress in Time 70.699 %
+Iteration: 228, Progress in Time 71.010 %
+Iteration: 229, Progress in Time 71.321 %
+Iteration: 230, Progress in Time 71.633 %
+Iteration: 231, Progress in Time 71.944 %
+Iteration: 232, Progress in Time 72.256 %
+Iteration: 233, Progress in Time 72.567 %
+Iteration: 234, Progress in Time 72.879 %
+Iteration: 235, Progress in Time 73.190 %
+Iteration: 236, Progress in Time 73.502 %
+Iteration: 237, Progress in Time 73.813 %
+Iteration: 238, Progress in Time 74.125 %
+Iteration: 239, Progress in Time 74.436 %
+Iteration: 240, Progress in Time 74.747 %
+Iteration: 241, Progress in Time 75.059 %
+Iteration: 242, Progress in Time 75.370 %
+Iteration: 243, Progress in Time 75.682 %
+Iteration: 244, Progress in Time 75.993 %
+Iteration: 245, Progress in Time 76.305 %
+Iteration: 246, Progress in Time 76.616 %
+Iteration: 247, Progress in Time 76.928 %
+Iteration: 248, Progress in Time 77.239 %
+Iteration: 249, Progress in Time 77.550 %
+Iteration: 250, Progress in Time 77.862 %
+Iteration: 251, Progress in Time 78.173 %
+Iteration: 252, Progress in Time 78.485 %
+Iteration: 253, Progress in Time 78.796 %
+Iteration: 254, Progress in Time 79.108 %
+Iteration: 255, Progress in Time 79.419 %
+Iteration: 256, Progress in Time 79.731 %
+Iteration: 257, Progress in Time 80.042 %
+Iteration: 258, Progress in Time 80.354 %
+Iteration: 259, Progress in Time 80.665 %
+Iteration: 260, Progress in Time 80.976 %
+Iteration: 261, Progress in Time 81.288 %
+Iteration: 262, Progress in Time 81.599 %
+Iteration: 263, Progress in Time 81.911 %
+Iteration: 264, Progress in Time 82.222 %
+Iteration: 265, Progress in Time 82.534 %
+Iteration: 266, Progress in Time 82.845 %
+Iteration: 267, Progress in Time 83.157 %
+Iteration: 268, Progress in Time 83.468 %
+Iteration: 269, Progress in Time 83.780 %
+Iteration: 270, Progress in Time 84.091 %
+Iteration: 271, Progress in Time 84.402 %
+Iteration: 272, Progress in Time 84.714 %
+Iteration: 273, Progress in Time 85.025 %
+Iteration: 274, Progress in Time 85.337 %
+Iteration: 275, Progress in Time 85.648 %
+Iteration: 276, Progress in Time 85.960 %
+Iteration: 277, Progress in Time 86.271 %
+Iteration: 278, Progress in Time 86.583 %
+Iteration: 279, Progress in Time 86.894 %
+Iteration: 280, Progress in Time 87.206 %
+Iteration: 281, Progress in Time 87.517 %
+Iteration: 282, Progress in Time 87.828 %
+Iteration: 283, Progress in Time 88.140 %
+Iteration: 284, Progress in Time 88.451 %
+Iteration: 285, Progress in Time 88.763 %
+Iteration: 286, Progress in Time 89.074 %
+Iteration: 287, Progress in Time 89.386 %
+Iteration: 288, Progress in Time 89.697 %
+Iteration: 289, Progress in Time 90.009 %
+Iteration: 290, Progress in Time 90.320 %
+Iteration: 291, Progress in Time 90.632 %
+Iteration: 292, Progress in Time 90.943 %
+Iteration: 293, Progress in Time 91.254 %
+Iteration: 294, Progress in Time 91.566 %
+Iteration: 295, Progress in Time 91.877 %
+Iteration: 296, Progress in Time 92.189 %
+Iteration: 297, Progress in Time 92.500 %
+Iteration: 298, Progress in Time 92.812 %
+Iteration: 299, Progress in Time 93.123 %
+Iteration: 300, Progress in Time 93.435 %
+Iteration: 301, Progress in Time 93.746 %
+Iteration: 302, Progress in Time 94.058 %
+Iteration: 303, Progress in Time 94.369 %
+Iteration: 304, Progress in Time 94.680 %
+Iteration: 305, Progress in Time 94.992 %
+Iteration: 306, Progress in Time 95.303 %
+Iteration: 307, Progress in Time 95.615 %
+Iteration: 308, Progress in Time 95.926 %
+Iteration: 309, Progress in Time 96.238 %
+Iteration: 310, Progress in Time 96.549 %
+Iteration: 311, Progress in Time 96.861 %
+Iteration: 312, Progress in Time 97.172 %
+Iteration: 313, Progress in Time 97.484 %
+Iteration: 314, Progress in Time 97.795 %
+Iteration: 315, Progress in Time 98.106 %
+Iteration: 316, Progress in Time 98.418 %
+Iteration: 317, Progress in Time 98.729 %
+Iteration: 318, Progress in Time 99.041 %
+Iteration: 319, Progress in Time 99.352 %
+Iteration: 320, Progress in Time 99.664 %
+Iteration: 321, Progress in Time 99.975 %
+Iteration: 322, Progress in Time 100.000 %
+                                  END SOLVER
+================================================================================
+                         FINAL ASSEMBLY OF THE RESULTS
+Regrouping all the results in a single file...
+Reading File 1 of 3
+Reading File 2 of 3
+Reading File 3 of 3
+Replacing all individual files with a single pickle (this could take a while) ...
+Regrouped all the times in a single file: Results/rsw_propagation_NX_500_1/Results.pik
+                                  END ASSEMBLER
+================================================================================
+Running simulation for input_1000.ini...
+The simulation proceeds with default topology: constant area
+Boundary Conditions Left:                    reflective
+Boundary Conditions Right:                   transparent
+================================================================================
+
+================================================================================
+                         🚀  WELCOME TO PYSHOCKTUBE 🚀
+                  Fluid Dynamics Simulation for Shock Tubes
+================================================================================
+
+================================================================================
+                                SIMULATION DATA
+Length of the domain [m]:                    2.000000e+00
+Number of points:                            1000
+Final time instant [s]:                      1.500000e-02
+Fluid name:                                  D6
+Fluid treatment:                             real
+Initial L/R density values [kg/m3]:          (1.881900e+02, 1.272700e+02)
+Initial L/R velocity values [m/s]:           (0.000000e+00, 1.678000e+01)
+Initial L/R pressure values [Pa]:            (9.122000e+05, 8.017000e+05)
+Initial L/R temperature values [K]:          (6.421064e+02, 6.368527e+02)
+Initial L/R energy values [J/kg]:            (5.335693e+05, 5.310469e+05)
+
+================================================================================
+                                 START SOLVER
+Numerical flux method: roe_arabi
+MUSCL reconstruction: False
+Entropy fix active: True
+Real Gas model, library: StanMix
+Entropy fix coefficient: 0.02
+================================================================================
+
+Iteration: 1, Progress in Time 0.156 %
+Iteration: 2, Progress in Time 0.312 %
+Iteration: 3, Progress in Time 0.468 %
+Iteration: 4, Progress in Time 0.623 %
+Iteration: 5, Progress in Time 0.779 %
+Iteration: 6, Progress in Time 0.935 %
+Iteration: 7, Progress in Time 1.090 %
+Iteration: 8, Progress in Time 1.246 %
+Iteration: 9, Progress in Time 1.402 %
+Iteration: 10, Progress in Time 1.557 %
+Iteration: 11, Progress in Time 1.713 %
+Iteration: 12, Progress in Time 1.868 %
+Iteration: 13, Progress in Time 2.024 %
+Iteration: 14, Progress in Time 2.179 %
+Iteration: 15, Progress in Time 2.335 %
+Iteration: 16, Progress in Time 2.490 %
+Iteration: 17, Progress in Time 2.646 %
+Iteration: 18, Progress in Time 2.801 %
+Iteration: 19, Progress in Time 2.957 %
+Iteration: 20, Progress in Time 3.112 %
+Iteration: 21, Progress in Time 3.268 %
+Iteration: 22, Progress in Time 3.423 %
+Iteration: 23, Progress in Time 3.579 %
+Iteration: 24, Progress in Time 3.735 %
+Iteration: 25, Progress in Time 3.890 %
+Iteration: 26, Progress in Time 4.046 %
+Iteration: 27, Progress in Time 4.201 %
+Iteration: 28, Progress in Time 4.357 %
+Iteration: 29, Progress in Time 4.512 %
+Iteration: 30, Progress in Time 4.668 %
+Iteration: 31, Progress in Time 4.823 %
+Iteration: 32, Progress in Time 4.979 %
+Iteration: 33, Progress in Time 5.134 %
+Iteration: 34, Progress in Time 5.290 %
+Iteration: 35, Progress in Time 5.446 %
+Iteration: 36, Progress in Time 5.601 %
+Iteration: 37, Progress in Time 5.757 %
+Iteration: 38, Progress in Time 5.912 %
+Iteration: 39, Progress in Time 6.068 %
+Iteration: 40, Progress in Time 6.223 %
+Iteration: 41, Progress in Time 6.379 %
+Iteration: 42, Progress in Time 6.534 %
+Iteration: 43, Progress in Time 6.690 %
+Iteration: 44, Progress in Time 6.846 %
+Iteration: 45, Progress in Time 7.001 %
+Iteration: 46, Progress in Time 7.157 %
+Iteration: 47, Progress in Time 7.312 %
+Iteration: 48, Progress in Time 7.468 %
+Iteration: 49, Progress in Time 7.623 %
+Iteration: 50, Progress in Time 7.779 %
+Iteration: 51, Progress in Time 7.934 %
+Iteration: 52, Progress in Time 8.090 %
+Iteration: 53, Progress in Time 8.246 %
+Iteration: 54, Progress in Time 8.401 %
+Iteration: 55, Progress in Time 8.557 %
+Iteration: 56, Progress in Time 8.712 %
+Iteration: 57, Progress in Time 8.868 %
+Iteration: 58, Progress in Time 9.023 %
+Iteration: 59, Progress in Time 9.179 %
+Iteration: 60, Progress in Time 9.334 %
+Iteration: 61, Progress in Time 9.490 %
+Iteration: 62, Progress in Time 9.646 %
+Iteration: 63, Progress in Time 9.801 %
+Iteration: 64, Progress in Time 9.957 %
+Iteration: 65, Progress in Time 10.112 %
+Iteration: 66, Progress in Time 10.268 %
+Iteration: 67, Progress in Time 10.423 %
+Iteration: 68, Progress in Time 10.579 %
+Iteration: 69, Progress in Time 10.734 %
+Iteration: 70, Progress in Time 10.890 %
+Iteration: 71, Progress in Time 11.046 %
+Iteration: 72, Progress in Time 11.201 %
+Iteration: 73, Progress in Time 11.357 %
+Iteration: 74, Progress in Time 11.512 %
+Iteration: 75, Progress in Time 11.668 %
+Iteration: 76, Progress in Time 11.823 %
+Iteration: 77, Progress in Time 11.979 %
+Iteration: 78, Progress in Time 12.134 %
+Iteration: 79, Progress in Time 12.290 %
+Iteration: 80, Progress in Time 12.446 %
+Iteration: 81, Progress in Time 12.601 %
+Iteration: 82, Progress in Time 12.757 %
+Iteration: 83, Progress in Time 12.912 %
+Iteration: 84, Progress in Time 13.068 %
+Iteration: 85, Progress in Time 13.223 %
+Iteration: 86, Progress in Time 13.379 %
+Iteration: 87, Progress in Time 13.535 %
+Iteration: 88, Progress in Time 13.690 %
+Iteration: 89, Progress in Time 13.846 %
+Iteration: 90, Progress in Time 14.001 %
+Iteration: 91, Progress in Time 14.157 %
+Iteration: 92, Progress in Time 14.312 %
+Iteration: 93, Progress in Time 14.468 %
+Iteration: 94, Progress in Time 14.623 %
+Iteration: 95, Progress in Time 14.779 %
+Iteration: 96, Progress in Time 14.935 %
+Iteration: 97, Progress in Time 15.090 %
+Iteration: 98, Progress in Time 15.246 %
+Iteration: 99, Progress in Time 15.401 %
+Iteration: 100, Progress in Time 15.557 %
+Iteration: 101, Progress in Time 15.712 %
+Iteration: 102, Progress in Time 15.868 %
+Iteration: 103, Progress in Time 16.024 %
+Iteration: 104, Progress in Time 16.179 %
+Iteration: 105, Progress in Time 16.335 %
+Iteration: 106, Progress in Time 16.490 %
+Iteration: 107, Progress in Time 16.646 %
+Iteration: 108, Progress in Time 16.801 %
+Iteration: 109, Progress in Time 16.957 %
+Iteration: 110, Progress in Time 17.112 %
+Iteration: 111, Progress in Time 17.268 %
+Iteration: 112, Progress in Time 17.424 %
+Iteration: 113, Progress in Time 17.579 %
+Iteration: 114, Progress in Time 17.735 %
+Iteration: 115, Progress in Time 17.890 %
+Iteration: 116, Progress in Time 18.046 %
+Iteration: 117, Progress in Time 18.201 %
+Iteration: 118, Progress in Time 18.357 %
+Iteration: 119, Progress in Time 18.513 %
+Iteration: 120, Progress in Time 18.668 %
+Iteration: 121, Progress in Time 18.824 %
+Iteration: 122, Progress in Time 18.979 %
+Iteration: 123, Progress in Time 19.135 %
+Iteration: 124, Progress in Time 19.290 %
+Iteration: 125, Progress in Time 19.446 %
+Iteration: 126, Progress in Time 19.602 %
+Iteration: 127, Progress in Time 19.757 %
+Iteration: 128, Progress in Time 19.913 %
+Iteration: 129, Progress in Time 20.068 %
+Iteration: 130, Progress in Time 20.224 %
+Iteration: 131, Progress in Time 20.379 %
+Iteration: 132, Progress in Time 20.535 %
+Iteration: 133, Progress in Time 20.690 %
+Iteration: 134, Progress in Time 20.846 %
+Iteration: 135, Progress in Time 21.002 %
+Iteration: 136, Progress in Time 21.157 %
+Iteration: 137, Progress in Time 21.313 %
+Iteration: 138, Progress in Time 21.468 %
+Iteration: 139, Progress in Time 21.624 %
+Iteration: 140, Progress in Time 21.779 %
+Iteration: 141, Progress in Time 21.935 %
+Iteration: 142, Progress in Time 22.091 %
+Iteration: 143, Progress in Time 22.246 %
+Iteration: 144, Progress in Time 22.402 %
+Iteration: 145, Progress in Time 22.557 %
+Iteration: 146, Progress in Time 22.713 %
+Iteration: 147, Progress in Time 22.868 %
+Iteration: 148, Progress in Time 23.024 %
+Iteration: 149, Progress in Time 23.180 %
+Iteration: 150, Progress in Time 23.335 %
+Iteration: 151, Progress in Time 23.491 %
+Iteration: 152, Progress in Time 23.646 %
+Iteration: 153, Progress in Time 23.802 %
+Iteration: 154, Progress in Time 23.957 %
+Iteration: 155, Progress in Time 24.113 %
+Iteration: 156, Progress in Time 24.269 %
+Iteration: 157, Progress in Time 24.424 %
+Iteration: 158, Progress in Time 24.580 %
+Iteration: 159, Progress in Time 24.735 %
+Iteration: 160, Progress in Time 24.891 %
+Iteration: 161, Progress in Time 25.046 %
+Iteration: 162, Progress in Time 25.202 %
+Iteration: 163, Progress in Time 25.357 %
+Iteration: 164, Progress in Time 25.513 %
+Iteration: 165, Progress in Time 25.669 %
+Iteration: 166, Progress in Time 25.824 %
+Iteration: 167, Progress in Time 25.980 %
+Iteration: 168, Progress in Time 26.135 %
+Iteration: 169, Progress in Time 26.291 %
+Iteration: 170, Progress in Time 26.446 %
+Iteration: 171, Progress in Time 26.602 %
+Iteration: 172, Progress in Time 26.758 %
+Iteration: 173, Progress in Time 26.913 %
+Iteration: 174, Progress in Time 27.069 %
+Iteration: 175, Progress in Time 27.224 %
+Iteration: 176, Progress in Time 27.380 %
+Iteration: 177, Progress in Time 27.535 %
+Iteration: 178, Progress in Time 27.691 %
+Iteration: 179, Progress in Time 27.847 %
+Iteration: 180, Progress in Time 28.002 %
+Iteration: 181, Progress in Time 28.158 %
+Iteration: 182, Progress in Time 28.313 %
+Iteration: 183, Progress in Time 28.469 %
+Iteration: 184, Progress in Time 28.624 %
+Iteration: 185, Progress in Time 28.780 %
+Iteration: 186, Progress in Time 28.936 %
+Iteration: 187, Progress in Time 29.091 %
+Iteration: 188, Progress in Time 29.247 %
+Iteration: 189, Progress in Time 29.402 %
+Iteration: 190, Progress in Time 29.558 %
+Iteration: 191, Progress in Time 29.713 %
+Iteration: 192, Progress in Time 29.869 %
+Iteration: 193, Progress in Time 30.025 %
+Iteration: 194, Progress in Time 30.180 %
+Iteration: 195, Progress in Time 30.336 %
+Iteration: 196, Progress in Time 30.491 %
+Iteration: 197, Progress in Time 30.647 %
+Iteration: 198, Progress in Time 30.802 %
+Iteration: 199, Progress in Time 30.958 %
+Iteration: 200, Progress in Time 31.114 %
+Iteration: 201, Progress in Time 31.269 %
+Iteration: 202, Progress in Time 31.425 %
+Iteration: 203, Progress in Time 31.580 %
+Iteration: 204, Progress in Time 31.736 %
+Iteration: 205, Progress in Time 31.891 %
+Iteration: 206, Progress in Time 32.047 %
+Iteration: 207, Progress in Time 32.202 %
+Iteration: 208, Progress in Time 32.358 %
+Iteration: 209, Progress in Time 32.514 %
+Iteration: 210, Progress in Time 32.669 %
+Iteration: 211, Progress in Time 32.825 %
+Iteration: 212, Progress in Time 32.980 %
+Iteration: 213, Progress in Time 33.136 %
+Iteration: 214, Progress in Time 33.291 %
+Iteration: 215, Progress in Time 33.447 %
+Iteration: 216, Progress in Time 33.603 %
+Iteration: 217, Progress in Time 33.758 %
+Iteration: 218, Progress in Time 33.914 %
+Iteration: 219, Progress in Time 34.069 %
+Iteration: 220, Progress in Time 34.225 %
+Iteration: 221, Progress in Time 34.380 %
+Iteration: 222, Progress in Time 34.536 %
+Iteration: 223, Progress in Time 34.692 %
+Iteration: 224, Progress in Time 34.847 %
+Iteration: 225, Progress in Time 35.003 %
+Iteration: 226, Progress in Time 35.158 %
+Iteration: 227, Progress in Time 35.314 %
+Iteration: 228, Progress in Time 35.469 %
+Iteration: 229, Progress in Time 35.625 %
+Iteration: 230, Progress in Time 35.781 %
+Iteration: 231, Progress in Time 35.936 %
+Iteration: 232, Progress in Time 36.092 %
+Iteration: 233, Progress in Time 36.247 %
+Iteration: 234, Progress in Time 36.403 %
+Iteration: 235, Progress in Time 36.558 %
+Iteration: 236, Progress in Time 36.714 %
+Iteration: 237, Progress in Time 36.870 %
+Iteration: 238, Progress in Time 37.025 %
+Iteration: 239, Progress in Time 37.181 %
+Iteration: 240, Progress in Time 37.336 %
+Iteration: 241, Progress in Time 37.492 %
+Iteration: 242, Progress in Time 37.647 %
+Iteration: 243, Progress in Time 37.803 %
+Iteration: 244, Progress in Time 37.959 %
+Iteration: 245, Progress in Time 38.114 %
+Iteration: 246, Progress in Time 38.270 %
+Iteration: 247, Progress in Time 38.425 %
+Iteration: 248, Progress in Time 38.581 %
+Iteration: 249, Progress in Time 38.736 %
+Iteration: 250, Progress in Time 38.892 %
+Iteration: 251, Progress in Time 39.048 %
+Iteration: 252, Progress in Time 39.203 %
+Iteration: 253, Progress in Time 39.359 %
+Iteration: 254, Progress in Time 39.514 %
+Iteration: 255, Progress in Time 39.670 %
+Iteration: 256, Progress in Time 39.825 %
+Iteration: 257, Progress in Time 39.981 %
+Iteration: 258, Progress in Time 40.137 %
+Iteration: 259, Progress in Time 40.292 %
+Iteration: 260, Progress in Time 40.448 %
+Iteration: 261, Progress in Time 40.603 %
+Iteration: 262, Progress in Time 40.759 %
+Iteration: 263, Progress in Time 40.914 %
+Iteration: 264, Progress in Time 41.070 %
+Iteration: 265, Progress in Time 41.226 %
+Iteration: 266, Progress in Time 41.381 %
+Iteration: 267, Progress in Time 41.537 %
+Iteration: 268, Progress in Time 41.692 %
+Iteration: 269, Progress in Time 41.848 %
+Iteration: 270, Progress in Time 42.003 %
+Iteration: 271, Progress in Time 42.159 %
+Iteration: 272, Progress in Time 42.315 %
+Iteration: 273, Progress in Time 42.470 %
+Iteration: 274, Progress in Time 42.626 %
+Iteration: 275, Progress in Time 42.781 %
+Iteration: 276, Progress in Time 42.937 %
+Iteration: 277, Progress in Time 43.092 %
+Iteration: 278, Progress in Time 43.248 %
+Iteration: 279, Progress in Time 43.404 %
+Iteration: 280, Progress in Time 43.559 %
+Iteration: 281, Progress in Time 43.715 %
+Iteration: 282, Progress in Time 43.870 %
+Iteration: 283, Progress in Time 44.026 %
+Iteration: 284, Progress in Time 44.181 %
+Iteration: 285, Progress in Time 44.337 %
+Iteration: 286, Progress in Time 44.493 %
+Iteration: 287, Progress in Time 44.648 %
+Iteration: 288, Progress in Time 44.804 %
+Iteration: 289, Progress in Time 44.959 %
+Iteration: 290, Progress in Time 45.115 %
+Iteration: 291, Progress in Time 45.270 %
+Iteration: 292, Progress in Time 45.426 %
+Iteration: 293, Progress in Time 45.582 %
+Iteration: 294, Progress in Time 45.737 %
+Iteration: 295, Progress in Time 45.893 %
+Iteration: 296, Progress in Time 46.048 %
+Iteration: 297, Progress in Time 46.204 %
+Iteration: 298, Progress in Time 46.359 %
+Iteration: 299, Progress in Time 46.515 %
+Iteration: 300, Progress in Time 46.671 %
+Iteration: 301, Progress in Time 46.826 %
+Iteration: 302, Progress in Time 46.982 %
+Iteration: 303, Progress in Time 47.137 %
+Iteration: 304, Progress in Time 47.293 %
+Iteration: 305, Progress in Time 47.448 %
+Iteration: 306, Progress in Time 47.604 %
+Iteration: 307, Progress in Time 47.760 %
+Iteration: 308, Progress in Time 47.915 %
+Iteration: 309, Progress in Time 48.071 %
+Iteration: 310, Progress in Time 48.226 %
+Iteration: 311, Progress in Time 48.382 %
+Iteration: 312, Progress in Time 48.537 %
+Iteration: 313, Progress in Time 48.693 %
+Iteration: 314, Progress in Time 48.849 %
+Iteration: 315, Progress in Time 49.004 %
+Iteration: 316, Progress in Time 49.160 %
+Iteration: 317, Progress in Time 49.315 %
+Iteration: 318, Progress in Time 49.471 %
+Iteration: 319, Progress in Time 49.626 %
+Iteration: 320, Progress in Time 49.782 %
+Iteration: 321, Progress in Time 49.938 %
+Iteration: 322, Progress in Time 50.093 %
+Iteration: 323, Progress in Time 50.249 %
+Iteration: 324, Progress in Time 50.404 %
+Iteration: 325, Progress in Time 50.560 %
+Iteration: 326, Progress in Time 50.715 %
+Iteration: 327, Progress in Time 50.871 %
+Iteration: 328, Progress in Time 51.027 %
+Iteration: 329, Progress in Time 51.182 %
+Iteration: 330, Progress in Time 51.338 %
+Iteration: 331, Progress in Time 51.493 %
+Iteration: 332, Progress in Time 51.649 %
+Iteration: 333, Progress in Time 51.804 %
+Iteration: 334, Progress in Time 51.960 %
+Iteration: 335, Progress in Time 52.116 %
+Iteration: 336, Progress in Time 52.271 %
+Iteration: 337, Progress in Time 52.427 %
+Iteration: 338, Progress in Time 52.582 %
+Iteration: 339, Progress in Time 52.738 %
+Iteration: 340, Progress in Time 52.893 %
+Iteration: 341, Progress in Time 53.049 %
+Iteration: 342, Progress in Time 53.205 %
+Iteration: 343, Progress in Time 53.360 %
+Iteration: 344, Progress in Time 53.516 %
+Iteration: 345, Progress in Time 53.671 %
+Iteration: 346, Progress in Time 53.827 %
+Iteration: 347, Progress in Time 53.982 %
+Iteration: 348, Progress in Time 54.138 %
+Iteration: 349, Progress in Time 54.294 %
+Iteration: 350, Progress in Time 54.449 %
+Iteration: 351, Progress in Time 54.605 %
+Iteration: 352, Progress in Time 54.760 %
+Iteration: 353, Progress in Time 54.916 %
+Iteration: 354, Progress in Time 55.071 %
+Iteration: 355, Progress in Time 55.227 %
+Iteration: 356, Progress in Time 55.383 %
+Iteration: 357, Progress in Time 55.538 %
+Iteration: 358, Progress in Time 55.694 %
+Iteration: 359, Progress in Time 55.849 %
+Iteration: 360, Progress in Time 56.005 %
+Iteration: 361, Progress in Time 56.160 %
+Iteration: 362, Progress in Time 56.316 %
+Iteration: 363, Progress in Time 56.472 %
+Iteration: 364, Progress in Time 56.627 %
+Iteration: 365, Progress in Time 56.783 %
+Iteration: 366, Progress in Time 56.938 %
+Iteration: 367, Progress in Time 57.094 %
+Iteration: 368, Progress in Time 57.249 %
+Iteration: 369, Progress in Time 57.405 %
+Iteration: 370, Progress in Time 57.561 %
+Iteration: 371, Progress in Time 57.716 %
+Iteration: 372, Progress in Time 57.872 %
+Iteration: 373, Progress in Time 58.027 %
+Iteration: 374, Progress in Time 58.183 %
+Iteration: 375, Progress in Time 58.338 %
+Iteration: 376, Progress in Time 58.494 %
+Iteration: 377, Progress in Time 58.650 %
+Iteration: 378, Progress in Time 58.805 %
+Iteration: 379, Progress in Time 58.961 %
+Iteration: 380, Progress in Time 59.116 %
+Iteration: 381, Progress in Time 59.272 %
+Iteration: 382, Progress in Time 59.427 %
+Iteration: 383, Progress in Time 59.583 %
+Iteration: 384, Progress in Time 59.739 %
+Iteration: 385, Progress in Time 59.894 %
+Iteration: 386, Progress in Time 60.050 %
+Iteration: 387, Progress in Time 60.205 %
+Iteration: 388, Progress in Time 60.361 %
+Iteration: 389, Progress in Time 60.517 %
+Iteration: 390, Progress in Time 60.672 %
+Iteration: 391, Progress in Time 60.828 %
+Iteration: 392, Progress in Time 60.983 %
+Iteration: 393, Progress in Time 61.139 %
+Iteration: 394, Progress in Time 61.294 %
+Iteration: 395, Progress in Time 61.450 %
+Iteration: 396, Progress in Time 61.606 %
+Iteration: 397, Progress in Time 61.761 %
+Iteration: 398, Progress in Time 61.917 %
+Iteration: 399, Progress in Time 62.072 %
+Iteration: 400, Progress in Time 62.228 %
+Iteration: 401, Progress in Time 62.383 %
+Iteration: 402, Progress in Time 62.539 %
+Iteration: 403, Progress in Time 62.695 %
+Iteration: 404, Progress in Time 62.850 %
+Iteration: 405, Progress in Time 63.006 %
+Iteration: 406, Progress in Time 63.161 %
+Iteration: 407, Progress in Time 63.317 %
+Iteration: 408, Progress in Time 63.472 %
+Iteration: 409, Progress in Time 63.628 %
+Iteration: 410, Progress in Time 63.784 %
+Iteration: 411, Progress in Time 63.939 %
+Iteration: 412, Progress in Time 64.095 %
+Iteration: 413, Progress in Time 64.250 %
+Iteration: 414, Progress in Time 64.406 %
+Iteration: 415, Progress in Time 64.561 %
+Iteration: 416, Progress in Time 64.717 %
+Iteration: 417, Progress in Time 64.873 %
+Iteration: 418, Progress in Time 65.028 %
+Iteration: 419, Progress in Time 65.184 %
+Iteration: 420, Progress in Time 65.339 %
+Iteration: 421, Progress in Time 65.495 %
+Iteration: 422, Progress in Time 65.650 %
+Iteration: 423, Progress in Time 65.806 %
+Iteration: 424, Progress in Time 65.962 %
+Iteration: 425, Progress in Time 66.117 %
+Iteration: 426, Progress in Time 66.273 %
+Iteration: 427, Progress in Time 66.428 %
+Iteration: 428, Progress in Time 66.584 %
+Iteration: 429, Progress in Time 66.739 %
+Iteration: 430, Progress in Time 66.895 %
+Iteration: 431, Progress in Time 67.051 %
+Iteration: 432, Progress in Time 67.206 %
+Iteration: 433, Progress in Time 67.362 %
+Iteration: 434, Progress in Time 67.517 %
+Iteration: 435, Progress in Time 67.673 %
+Iteration: 436, Progress in Time 67.828 %
+Iteration: 437, Progress in Time 67.984 %
+Iteration: 438, Progress in Time 68.140 %
+Iteration: 439, Progress in Time 68.295 %
+Iteration: 440, Progress in Time 68.451 %
+Iteration: 441, Progress in Time 68.606 %
+Iteration: 442, Progress in Time 68.762 %
+Iteration: 443, Progress in Time 68.917 %
+Iteration: 444, Progress in Time 69.073 %
+Iteration: 445, Progress in Time 69.229 %
+Iteration: 446, Progress in Time 69.384 %
+Iteration: 447, Progress in Time 69.540 %
+Iteration: 448, Progress in Time 69.695 %
+Iteration: 449, Progress in Time 69.851 %
+Iteration: 450, Progress in Time 70.006 %
+Iteration: 451, Progress in Time 70.162 %
+Iteration: 452, Progress in Time 70.318 %
+Iteration: 453, Progress in Time 70.473 %
+Iteration: 454, Progress in Time 70.629 %
+Iteration: 455, Progress in Time 70.784 %
+Iteration: 456, Progress in Time 70.940 %
+Iteration: 457, Progress in Time 71.096 %
+Iteration: 458, Progress in Time 71.251 %
+Iteration: 459, Progress in Time 71.407 %
+Iteration: 460, Progress in Time 71.562 %
+Iteration: 461, Progress in Time 71.718 %
+Iteration: 462, Progress in Time 71.873 %
+Iteration: 463, Progress in Time 72.029 %
+Iteration: 464, Progress in Time 72.185 %
+Iteration: 465, Progress in Time 72.340 %
+Iteration: 466, Progress in Time 72.496 %
+Iteration: 467, Progress in Time 72.651 %
+Iteration: 468, Progress in Time 72.807 %
+Iteration: 469, Progress in Time 72.962 %
+Iteration: 470, Progress in Time 73.118 %
+Iteration: 471, Progress in Time 73.274 %
+Iteration: 472, Progress in Time 73.429 %
+Iteration: 473, Progress in Time 73.585 %
+Iteration: 474, Progress in Time 73.740 %
+Iteration: 475, Progress in Time 73.896 %
+Iteration: 476, Progress in Time 74.051 %
+Iteration: 477, Progress in Time 74.207 %
+Iteration: 478, Progress in Time 74.363 %
+Iteration: 479, Progress in Time 74.518 %
+Iteration: 480, Progress in Time 74.674 %
+Iteration: 481, Progress in Time 74.829 %
+Iteration: 482, Progress in Time 74.985 %
+Iteration: 483, Progress in Time 75.140 %
+Iteration: 484, Progress in Time 75.296 %
+Iteration: 485, Progress in Time 75.452 %
+Iteration: 486, Progress in Time 75.607 %
+Iteration: 487, Progress in Time 75.763 %
+Iteration: 488, Progress in Time 75.918 %
+Iteration: 489, Progress in Time 76.074 %
+Iteration: 490, Progress in Time 76.229 %
+Iteration: 491, Progress in Time 76.385 %
+Iteration: 492, Progress in Time 76.541 %
+Iteration: 493, Progress in Time 76.696 %
+Iteration: 494, Progress in Time 76.852 %
+Iteration: 495, Progress in Time 77.007 %
+Iteration: 496, Progress in Time 77.163 %
+Iteration: 497, Progress in Time 77.318 %
+Iteration: 498, Progress in Time 77.474 %
+Iteration: 499, Progress in Time 77.630 %
+Iteration: 500, Progress in Time 77.785 %
+Iteration: 501, Progress in Time 77.941 %
+Iteration: 502, Progress in Time 78.096 %
+Iteration: 503, Progress in Time 78.252 %
+Iteration: 504, Progress in Time 78.407 %
+Iteration: 505, Progress in Time 78.563 %
+Iteration: 506, Progress in Time 78.719 %
+Iteration: 507, Progress in Time 78.874 %
+Iteration: 508, Progress in Time 79.030 %
+Iteration: 509, Progress in Time 79.185 %
+Iteration: 510, Progress in Time 79.341 %
+Iteration: 511, Progress in Time 79.497 %
+Iteration: 512, Progress in Time 79.652 %
+Iteration: 513, Progress in Time 79.808 %
+Iteration: 514, Progress in Time 79.963 %
+Iteration: 515, Progress in Time 80.119 %
+Iteration: 516, Progress in Time 80.274 %
+Iteration: 517, Progress in Time 80.430 %
+Iteration: 518, Progress in Time 80.586 %
+Iteration: 519, Progress in Time 80.741 %
+Iteration: 520, Progress in Time 80.897 %
+Iteration: 521, Progress in Time 81.052 %
+Iteration: 522, Progress in Time 81.208 %
+Iteration: 523, Progress in Time 81.363 %
+Iteration: 524, Progress in Time 81.519 %
+Iteration: 525, Progress in Time 81.675 %
+Iteration: 526, Progress in Time 81.830 %
+Iteration: 527, Progress in Time 81.986 %
+Iteration: 528, Progress in Time 82.141 %
+Iteration: 529, Progress in Time 82.297 %
+Iteration: 530, Progress in Time 82.452 %
+Iteration: 531, Progress in Time 82.608 %
+Iteration: 532, Progress in Time 82.764 %
+Iteration: 533, Progress in Time 82.919 %
+Iteration: 534, Progress in Time 83.075 %
+Iteration: 535, Progress in Time 83.230 %
+Iteration: 536, Progress in Time 83.386 %
+Iteration: 537, Progress in Time 83.541 %
+Iteration: 538, Progress in Time 83.697 %
+Iteration: 539, Progress in Time 83.853 %
+Iteration: 540, Progress in Time 84.008 %
+Iteration: 541, Progress in Time 84.164 %
+Iteration: 542, Progress in Time 84.319 %
+Iteration: 543, Progress in Time 84.475 %
+Iteration: 544, Progress in Time 84.630 %
+Iteration: 545, Progress in Time 84.786 %
+Iteration: 546, Progress in Time 84.942 %
+Iteration: 547, Progress in Time 85.097 %
+Iteration: 548, Progress in Time 85.253 %
+Iteration: 549, Progress in Time 85.408 %
+Iteration: 550, Progress in Time 85.564 %
+Iteration: 551, Progress in Time 85.720 %
+Iteration: 552, Progress in Time 85.875 %
+Iteration: 553, Progress in Time 86.031 %
+Iteration: 554, Progress in Time 86.186 %
+Iteration: 555, Progress in Time 86.342 %
+Iteration: 556, Progress in Time 86.497 %
+Iteration: 557, Progress in Time 86.653 %
+Iteration: 558, Progress in Time 86.809 %
+Iteration: 559, Progress in Time 86.964 %
+Iteration: 560, Progress in Time 87.120 %
+Iteration: 561, Progress in Time 87.275 %
+Iteration: 562, Progress in Time 87.431 %
+Iteration: 563, Progress in Time 87.586 %
+Iteration: 564, Progress in Time 87.742 %
+Iteration: 565, Progress in Time 87.898 %
+Iteration: 566, Progress in Time 88.053 %
+Iteration: 567, Progress in Time 88.209 %
+Iteration: 568, Progress in Time 88.364 %
+Iteration: 569, Progress in Time 88.520 %
+Iteration: 570, Progress in Time 88.675 %
+Iteration: 571, Progress in Time 88.831 %
+Iteration: 572, Progress in Time 88.987 %
+Iteration: 573, Progress in Time 89.142 %
+Iteration: 574, Progress in Time 89.298 %
+Iteration: 575, Progress in Time 89.453 %
+Iteration: 576, Progress in Time 89.609 %
+Iteration: 577, Progress in Time 89.764 %
+Iteration: 578, Progress in Time 89.920 %
+Iteration: 579, Progress in Time 90.076 %
+Iteration: 580, Progress in Time 90.231 %
+Iteration: 581, Progress in Time 90.387 %
+Iteration: 582, Progress in Time 90.542 %
+Iteration: 583, Progress in Time 90.698 %
+Iteration: 584, Progress in Time 90.853 %
+Iteration: 585, Progress in Time 91.009 %
+Iteration: 586, Progress in Time 91.165 %
+Iteration: 587, Progress in Time 91.320 %
+Iteration: 588, Progress in Time 91.476 %
+Iteration: 589, Progress in Time 91.631 %
+Iteration: 590, Progress in Time 91.787 %
+Iteration: 591, Progress in Time 91.943 %
+Iteration: 592, Progress in Time 92.098 %
+Iteration: 593, Progress in Time 92.254 %
+Iteration: 594, Progress in Time 92.409 %
+Iteration: 595, Progress in Time 92.565 %
+Iteration: 596, Progress in Time 92.720 %
+Iteration: 597, Progress in Time 92.876 %
+Iteration: 598, Progress in Time 93.032 %
+Iteration: 599, Progress in Time 93.187 %
+Iteration: 600, Progress in Time 93.343 %
+Iteration: 601, Progress in Time 93.498 %
+Iteration: 602, Progress in Time 93.654 %
+Iteration: 603, Progress in Time 93.809 %
+Iteration: 604, Progress in Time 93.965 %
+Iteration: 605, Progress in Time 94.121 %
+Iteration: 606, Progress in Time 94.276 %
+Iteration: 607, Progress in Time 94.432 %
+Iteration: 608, Progress in Time 94.587 %
+Iteration: 609, Progress in Time 94.743 %
+Iteration: 610, Progress in Time 94.898 %
+Iteration: 611, Progress in Time 95.054 %
+Iteration: 612, Progress in Time 95.210 %
+Iteration: 613, Progress in Time 95.365 %
+Iteration: 614, Progress in Time 95.521 %
+Iteration: 615, Progress in Time 95.676 %
+Iteration: 616, Progress in Time 95.832 %
+Iteration: 617, Progress in Time 95.987 %
+Iteration: 618, Progress in Time 96.143 %
+Iteration: 619, Progress in Time 96.299 %
+Iteration: 620, Progress in Time 96.454 %
+Iteration: 621, Progress in Time 96.610 %
+Iteration: 622, Progress in Time 96.765 %
+Iteration: 623, Progress in Time 96.921 %
+Iteration: 624, Progress in Time 97.076 %
+Iteration: 625, Progress in Time 97.232 %
+Iteration: 626, Progress in Time 97.388 %
+Iteration: 627, Progress in Time 97.543 %
+Iteration: 628, Progress in Time 97.699 %
+Iteration: 629, Progress in Time 97.854 %
+Iteration: 630, Progress in Time 98.010 %
+Iteration: 631, Progress in Time 98.166 %
+Iteration: 632, Progress in Time 98.321 %
+Iteration: 633, Progress in Time 98.477 %
+Iteration: 634, Progress in Time 98.632 %
+Iteration: 635, Progress in Time 98.788 %
+Iteration: 636, Progress in Time 98.943 %
+Iteration: 637, Progress in Time 99.099 %
+Iteration: 638, Progress in Time 99.255 %
+Iteration: 639, Progress in Time 99.410 %
+Iteration: 640, Progress in Time 99.566 %
+Iteration: 641, Progress in Time 99.721 %
+Iteration: 642, Progress in Time 99.877 %
+Iteration: 643, Progress in Time 100.000 %
+                                  END SOLVER
+================================================================================
+                         FINAL ASSEMBLY OF THE RESULTS
+Regrouping all the results in a single file...
+Reading File 1 of 4
+Reading File 2 of 4
+Reading File 3 of 4
+Reading File 4 of 4
+Replacing all individual files with a single pickle (this could take a while) ...
+Regrouped all the times in a single file: Results/rsw_propagation_NX_1000/Results.pik
+                                  END ASSEMBLER
+================================================================================
