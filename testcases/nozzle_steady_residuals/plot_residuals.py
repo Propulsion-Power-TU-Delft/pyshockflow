@@ -4,7 +4,7 @@ import re
 import sys
 import matplotlib.pyplot as plt
 import numpy as np
-from pyshockflow.plot_styles import *
+from pyshockflow.thesis_plots import *
 
 
 def read_residuals(filename):
@@ -38,17 +38,17 @@ def plot_residuals(iterations, residuals, labels=None):
     if labels is None:
         labels = [f"Residual {i + 1}" for i in range(n_components)]
 
-    plt.figure(figsize=(6, 4))
+    set_thesis_style()
+    fig, ax = create_figure(fraction=0.5, aspect_ratio=1.3, subplots=(1, 1), is_print=False)
     for i in range(n_components):
         component = [r[i] for r in residuals]
-        plt.plot(iterations, component-component[0], label=labels[i])
+        ax.plot(iterations, component-component[0], label=labels[i])
 
-    plt.xlabel("Iteration")
-    plt.ylabel("Residuals drop")
-    plt.legend()
-    plt.grid(True, alpha=0.3)
-    plt.tight_layout()
-    plt.savefig("residuals_nozzle.pdf", bbox_inches="tight")
+    ax.set_xlabel("Iteration")
+    ax.set_ylabel("Residuals drop")
+    ax.legend()
+    ax.grid(True, alpha=0.3)
+    plt.savefig("residuals_nozzle.pdf")
     plt.show()
     
 

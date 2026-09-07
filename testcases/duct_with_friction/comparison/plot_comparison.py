@@ -3,11 +3,8 @@ import numpy as np
 import pickle
 import os
 from pyshockflow import RiemannProblem
-from pyshockflow import *
+from pyshockflow.thesis_plots import *
 from pyshockflow.fluid import FluidIdeal
-
-markerSize = 4
-lw=1.5
 
 fluid = FluidIdeal(1.4, 287.05)
 cp = fluid.Rgas*fluid.gmma/(fluid.gmma-1)
@@ -42,8 +39,8 @@ cf = [
 cmap = plt.cm.viridis
 colors = cmap(np.linspace(0, 1, len(inputFiles)))
 
-figSize = (8, 3.5)
-fig, ax = plt.subplots(1,2, figsize=figSize)
+set_thesis_style()
+fig, ax = create_figure(fraction=1, aspect_ratio=1.2, subplots=(1, 2), is_print=False)
 for iInput in range(len(inputFiles)):
 
     with open(inputFiles[iInput], 'rb') as file:
@@ -67,7 +64,6 @@ for iInput in range(len(inputFiles)):
         res['X Coords'][:]/length,
         totalP/totalP[0],
         '--',
-        lw=lw,
         color=color
     )
 
@@ -75,7 +71,6 @@ for iInput in range(len(inputFiles)):
         res['X Coords'][:]/length,
         mach,
         '--',
-        lw=lw,
         color=color
     )
     
@@ -106,7 +101,6 @@ for iInput in range(len(inputFiles)):
         sol['pt']/sol['pt'][0],
         '-',
         color=color,
-        lw=lw,
         label=labels[iInput],
     )
     
@@ -115,7 +109,6 @@ for iInput in range(len(inputFiles)):
         sol['M'],
         '-',
         color=color,
-        lw=lw
     )
 
 
@@ -132,9 +125,8 @@ for axx in ax:
     axx.set_xlabel(r'$x/L$')
     axx.grid(alpha=.3)
 
-fig.legend(loc='upper center', ncol=3, bbox_to_anchor=(0.5, +1.2))
-fig.tight_layout()
-fig.savefig('Pictures/validation_friction_duct.pdf', bbox_inches='tight')
+fig.legend(loc='outside upper center', ncol=len(inputFiles))
+fig.savefig('Pictures/validation_friction_duct.pdf')
 
 
 

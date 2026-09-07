@@ -3,32 +3,26 @@ import numpy as np
 import pickle
 import os
 from pyshockflow import RiemannProblem
-from pyshockflow import *
+from pyshockflow.thesis_plots import *
 
 testNumber = [1,3,5]
-markerSize = 4
-# ANALYTICAL SOLUTIONS
+
+#data
 analyticalResults = ['../analytical/solutions/Test%i.pik' % i for i in testNumber]
 godunovResults = ['../godunov/Results/Test%i_NX_100/Results.pik' % i for i in testNumber]
 roeResults = ['../roe/Results/Test%i_NX_100/Results.pik' % i for i in testNumber]
-hllcResults = ['../hllc/Results/Test%i_NX_100/Results.pik' % i for i in testNumber]
-lw=2
 
-figSize = (10, 3.5)
+set_thesis_style()
+
 for iInput in range(len(analyticalResults)):
-    
-    fig, ax = plt.subplots(1,3, figsize=figSize)
-    
+    fig, ax = create_figure(fraction=1.0, aspect_ratio=1.0, subplots=(1, 3), is_print=False)
+        
     # ANALYTICAL
     with open(analyticalResults[iInput], 'rb') as file:
         res = pickle.load(file)
-        ax[0].plot(res.x+0.5, res.rho[:,-1], label=r'Reference', lw=lw)
-        ax[1].plot(res.x+0.5, res.u[:,-1], lw=lw)
-        ax[2].plot(res.x+0.5, res.p[:,-1], lw=lw)
-        
-        ax[0].set_ylabel(r'$\rho$')
-        ax[1].set_ylabel(r'$u$')
-        ax[2].set_ylabel(r'$p$')
+        ax[0].plot(res.x+0.5, res.rho[:,-1], label=r'Reference')
+        ax[1].plot(res.x+0.5, res.u[:,-1])
+        ax[2].plot(res.x+0.5, res.p[:,-1])
         
     # GODUNOV
     with open(godunovResults[iInput], 'rb') as file:
@@ -37,23 +31,18 @@ for iInput in range(len(analyticalResults)):
             res['X Coords'][1:-1], 
             res['Primitive']['Density'][1:-1,-1], 
             '--', 
-            ms=markerSize, 
             mfc='none', 
-            label=r'Godunov',
-            lw=lw)
+            label=r'Godunov')
         ax[1].plot(
             res['X Coords'][1:-1], 
             res['Primitive']['Velocity'][1:-1,-1], 
             '--', 
-            ms=markerSize, 
             mfc='none')
         ax[2].plot(
             res['X Coords'][1:-1], 
             res['Primitive']['Pressure'][1:-1,-1], 
             '--', 
-            ms=markerSize, 
-            mfc='none',
-            lw=lw)
+            mfc='none')
     
     # ROE
     with open(roeResults[iInput], 'rb') as file:
@@ -61,44 +50,29 @@ for iInput in range(len(analyticalResults)):
         ax[0].plot(
             res['X Coords'][1:-1], 
             res['Primitive']['Density'][1:-1,-1],
-            '-.', ms=markerSize, label=r'Roe', mfc='none', lw=lw)
+            '-.', label=r'Roe', mfc='none')
         ax[1].plot(
             res['X Coords'][1:-1], 
             res['Primitive']['Velocity'][1:-1,-1],
-            '-.', ms=markerSize, mfc='none', lw=lw)
+            '-.')
         ax[2].plot(
             res['X Coords'][1:-1], 
             res['Primitive']['Pressure'][1:-1,-1],
-            '-.', ms=markerSize, mfc='none', lw=lw)
-    
-    # HLLC
-    with open(hllcResults[iInput], 'rb') as file:
-        res = pickle.load(file)
-        ax[0].plot(
-            res['X Coords'][1:-1], 
-            res['Primitive']['Density'][1:-1,-1],
-            ':', ms=markerSize, label=r'HLLC', mfc='none', lw=lw)
-        ax[1].plot(
-            res['X Coords'][1:-1], 
-            res['Primitive']['Velocity'][1:-1,-1],
-            ':', ms=markerSize, mfc='none', lw=lw)
-        ax[2].plot(
-            res['X Coords'][1:-1], 
-            res['Primitive']['Pressure'][1:-1,-1],
-            ':', ms=markerSize, mfc='none', lw=lw)
-        
+            '-.')
     
     for axx in ax:
             axx.set_xlabel(r'$x$')
             axx.grid(alpha=.3)
     
+    ax[0].set_ylabel(r'$\rho$')
+    ax[1].set_ylabel(r'$u$')
+    ax[2].set_ylabel(r'$p$')
+    
     # Add a single legend at the bottom center
-    # Add a single legend at the bottom center
-    fig.legend(loc='upper center', ncol=4, bbox_to_anchor=(0.5, +1.11))
-    plt.tight_layout()
+    fig.legend(loc='outside upper center', ncol=3)
     # Adjust layout to make room for the legend
     
-    fig.savefig('Pictures/Test%i.pdf' % testNumber[iInput], bbox_inches='tight')
+    fig.savefig('Pictures/Test%i.pdf' % testNumber[iInput])
 
 
     

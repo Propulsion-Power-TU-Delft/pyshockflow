@@ -2,37 +2,20 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pickle
 from pyshockflow.fluid import FluidIdeal
-from pyshockflow.plot_styles import *
+from pyshockflow.thesis_plots import *
 from scipy.optimize import fsolve
 
-pressureList = [45, 75, 90, 94, 97]
+pressureList = [45, 75, 90, 95, 97]
 colors = plt.cm.viridis(np.linspace(1, 0, len(pressureList)))
-pickleList = ['Results/outletPressure_%ikPa_NX_100/Results.pik' %pressure for pressure in pressureList]
+pickleList = ['Results/outletPressure_%ikPa_NX_250/Results.pik' %pressure for pressure in pressureList]
 fluid = FluidIdeal(1.4, 287.05)
 
-fig, axes = plt.subplots(1, 2, figsize=(9, 4))
+set_thesis_style()
+fig, ax = create_figure(fraction=1, aspect_ratio=1.1, subplots=(1, 2), is_print=False)
 
 for i, pickleFile in enumerate(pickleList):
     with open(pickleFile, 'rb') as file:
         solution = pickle.load(file)
-    
-    if i == 0: # compute also reference
-        xArea = solution['X Coords']
-        areaRatio =  solution['Area'] / np.min(solution['Area'])
-        gammaFluid = 1.4
-        def machFunction(machLocal, areaRatioLocal, gammaFluid):
-            residual = areaRatioLocal - 1/machLocal * (2/(gammaFluid+1) * (1 + (gammaFluid-1)/2 * machLocal**2))**((gammaFluid+1)/(2*(gammaFluid-1)))
-            return residual
-
-        machTheory = np.zeros(len(xArea))
-        idThroat = np.argmin(areaRatio)
-        for iPoint in range(len(xArea)):
-            if iPoint < idThroat:
-                machTheory[iPoint] = fsolve(machFunction, 0.1, args=(areaRatio[iPoint], gammaFluid))[0]
-            else:
-                machTheory[iPoint] = fsolve(machFunction, 1.2, args=(areaRatio[iPoint], gammaFluid))[0]
-
-        axes[0].plot(xArea[::5], machTheory[::5], 'ko', mfc='none' ,label=r'Supersonic reference')
         
     xCoords = solution['X Coords'][1:-1]
     density = solution['Primitive']["Density"][1:-1,-1]
@@ -44,20 +27,33 @@ for i, pickleFile in enumerate(pickleList):
     temperature = fluid.computeTemperature_p_rho(pressure, density)
     totalTemperature = fluid.computeTotalTemperature_T_M(temperature, mach)
     
+    skip = 1
+    ax[0].plot(xCoords[::skip], mach[::skip], '--', color=colors[i], mfc = 'none')
+    ax[0].set_ylabel(r'$M$')
     
-    axes[0].plot(xCoords, mach, label=r'$p_{\rm out}=%i$ kPa' %(pressureList[i]), color=colors[i])
-    axes[0].set_ylabel(r'$M$')
+    ax[1].plot(xCoords[::skip], pressure[::skip]/1e3, '--', color=colors[i], mfc = 'none')
+    ax[1].set_ylabel(r'$p$ [kPa]')
     
-    axes[1].plot(xCoords, pressure/1e3, color=colors[i])
-    axes[1].set_ylabel(r'$p$ [kPa]')
+    for axx in ax:
+        axx.set_xlabel(r'$x$')
+        axx.grid(alpha=.3)
     
-    for ax in axes:
-        ax.set_xlabel(r'$x$')
-        ax.grid(alpha=.3)
+analyticalFile = 'nozzle_solutions_analytical.pkl'
+with open(analyticalFile, 'rb') as file:
+    analyticalSolutions = pickle.load(file)
 
-fig.legend(loc='upper center', bbox_to_anchor=(0.55, 1.18), ncol=3)
-plt.tight_layout()
-plt.savefig('Pictures/mach_pressure_ideal_nozzle.pdf', bbox_inches='tight')
+for i, p_out in enumerate(pressureList):
+    sol = analyticalSolutions[p_out*1e3]
+    xCoords = sol['x']
+    mach = sol['M']
+    pressure = sol['p']
+    
+    skip = 1
+    ax[0].plot(xCoords[::skip], mach[::skip], '-', color=colors[i], mfc = 'none', label=r'$p_{\rm out}=%i$ kPa' %(pressureList[i]))
+    ax[1].plot(xCoords[::skip], pressure[::skip]/1e3, '-', color=colors[i], mfc = 'none')
+
+fig.legend(loc='outside upper center', ncol=3)
+fig.savefig('Pictures/mach_pressure_ideal_nozzle.pdf')
     
 plt.show()
         
