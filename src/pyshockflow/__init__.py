@@ -16,6 +16,7 @@ from .friction_models import (
     MirelsTransitionalFriction,
     create_friction_model,
 )
+from .tank_boundary import Tank0D
 
 __all__ = [
     "Config",
@@ -39,4 +40,5 @@ __all__ = [
     "MirelsTurbulentFriction",
     "MirelsTransitionalFriction",
     "create_friction_model",
+    "Tank0D",
 ]

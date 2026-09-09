@@ -9,6 +9,7 @@ from pyshockflow import RiemannProblem
 from pyshockflow import AdvectionRoeBase, AdvectionRoeArabi, AdvectionRoeVinokur, AdvectionHLLC, AdvectionAUSMplusUP
 from pyshockflow import FluidIdeal, FluidReal
 from pyshockflow.friction_models import create_friction_model
+from pyshockflow.tank_boundary import Tank0D
 from pyshockflow.output import Output
 from pyshockflow.math_utils import *
 from pyshockflow.roe_vectorized import (compute_roe_flux_ideal,
@@ -124,6 +125,25 @@ class Driver:
         print("Boundary Conditions Left:                    %s" %self.boundaryType[0])
         print("Boundary Conditions Right:                   %s" %self.boundaryType[1])
         print("="*80)
+
+        # Initialize Tank Boundary Conditions if requested
+        self.tankLeft = None
+        self.tankRight = None
+        if self.boundaryType[0].lower() == 'tank':
+            v = self.config.getTankVolume('left')
+            p0 = self.config.getTankInitialPressure('left')
+            T0 = self.config.getTankInitialTemperature('left')
+            mode = self.config.getTankThermalMode('left')
+            self.tankLeft = Tank0D(volume=v, p_initial=p0, T_initial=T0, fluid=self.fluid, location='left', thermal_mode=mode)
+            print(f"Tank connected to Left boundary:  V={v:.4e} m3, p0={p0:.4e} Pa, T0={T0:.2f} K, mode={mode}")
+
+        if self.boundaryType[1].lower() == 'tank':
+            v = self.config.getTankVolume('right')
+            p0 = self.config.getTankInitialPressure('right')
+            T0 = self.config.getTankInitialTemperature('right')
+            mode = self.config.getTankThermalMode('right')
+            self.tankRight = Tank0D(volume=v, p_initial=p0, T_initial=T0, fluid=self.fluid, location='right', thermal_mode=mode)
+            print(f"Tank connected to Right boundary: V={v:.4e} m3, p0={p0:.4e} Pa, T0={T0:.2f} K, mode={mode}")
         
         # Print info
         print("\n" + "=" * 80)
@@ -428,6 +448,8 @@ class Driver:
             self.setInletBoundaryConditions('left')
         elif self.boundaryType[0].lower()=='outlet':
             self.setOutletBoundaryConditions('left')
+        elif self.boundaryType[0].lower()=='tank':
+            self.tankLeft.apply_boundary_condition(self.solutionPrimitive, iInternal=1, iHalo=0, area_tube=self.areaTube[0], fluid=self.fluid)
         else:
             raise ValueError("Unknown boundary condition type on the left")
         
@@ -441,6 +463,8 @@ class Driver:
             self.setOutletBoundaryConditions('right')
         elif self.boundaryType[1].lower()=='inlet':
             self.setInletBoundaryConditions('right')
+        elif self.boundaryType[1].lower()=='tank':
+            self.tankRight.apply_boundary_condition(self.solutionPrimitive, iInternal=-2, iHalo=-1, area_tube=self.areaTube[-1], fluid=self.fluid)
         else:
             raise ValueError("Unknown boundary condition type on the right")
         
@@ -618,6 +642,16 @@ class Driver:
             
             residuals = self.computeResiduals(primitiveOld, dt)
             self.updateSolution(residuals)
+
+            # Step 0D Tank ODEs if active (conserving interface fluxes)
+            if self.tankLeft is not None:
+                mass_flux_left = -self.flux[0, 0] * self.areaReference
+                energy_flux_left = -self.flux[0, 2] * self.areaReference
+                self.tankLeft.step(dt, newTime, mass_flux=mass_flux_left, energy_flux=energy_flux_left)
+            if self.tankRight is not None:
+                mass_flux_right = self.flux[-1, 0] * self.areaReference
+                energy_flux_right = self.flux[-1, 2] * self.areaReference
+                self.tankRight.step(dt, newTime, mass_flux=mass_flux_right, energy_flux=energy_flux_right)
             
             if simulationType=='steady':
                 self.printInfoResiduals(iTime, newTime, residuals)        
@@ -641,6 +675,16 @@ class Driver:
         output = Output(self.resultsPath)
         print(" "*34 + "END ASSEMBLER")
         print("="*80)
+
+        # Export tank histories if active (saved after Output assembler so it's not wiped by shutil.rmtree)
+        if self.tankLeft is not None:
+            self.tankLeft.save_history(self.resultsPath, 'TankHistory_Left.csv')
+            print(f"Tank history exported to: {self.resultsPath / 'TankHistory_Left.csv'}")
+        if self.tankRight is not None:
+            self.tankRight.save_history(self.resultsPath, 'TankHistory_Right.csv')
+            print(f"Tank history exported to: {self.resultsPath / 'TankHistory_Right.csv'}")
+        print(" "*34 + "END ASSEMBLER")
+        print("="*80)
     
     
     def computeResiduals(self, primitives, dt):
@@ -655,6 +699,7 @@ class Driver:
         # compute volumetric source terms, per unit volume
         source = self.computeSourceTerms(primitives)
         
+        self.flux = flux
         # assemble the full residual vector on every physical node (Numba accelerated)
         if NUMBA_AVAILABLE:
             return compute_residuals_numba(flux, source, self.dV, dt, self.areaReference)

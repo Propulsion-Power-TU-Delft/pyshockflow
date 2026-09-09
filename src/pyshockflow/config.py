@@ -79,6 +79,46 @@ class Config:
     def getOutletConditions(self):
         res = float(self.config_parser.get('SIMULATION', 'OUTLET_CONDITIONS'))
         return res
+
+    def getTankVolume(self, location='right'):
+        loc_key = f'TANK_VOLUME_{location.upper()}'
+        try:
+            return float(self.config_parser.get('SIMULATION', loc_key))
+        except Exception:
+            try:
+                return float(self.config_parser.get('SIMULATION', 'TANK_VOLUME'))
+            except Exception:
+                return 0.1
+
+    def getTankInitialPressure(self, location='right'):
+        loc_key = f'TANK_INITIAL_PRESSURE_{location.upper()}'
+        try:
+            return float(self.config_parser.get('SIMULATION', loc_key))
+        except Exception:
+            try:
+                return float(self.config_parser.get('SIMULATION', 'TANK_INITIAL_PRESSURE'))
+            except Exception:
+                return 1.0e5
+
+    def getTankInitialTemperature(self, location='right'):
+        loc_key = f'TANK_INITIAL_TEMPERATURE_{location.upper()}'
+        try:
+            return float(self.config_parser.get('SIMULATION', loc_key))
+        except Exception:
+            try:
+                return float(self.config_parser.get('SIMULATION', 'TANK_INITIAL_TEMPERATURE'))
+            except Exception:
+                return 300.0
+
+    def getTankThermalMode(self, location='right'):
+        loc_key = f'TANK_THERMAL_MODE_{location.upper()}'
+        try:
+            return str(self.config_parser.get('SIMULATION', loc_key)).lower()
+        except Exception:
+            try:
+                return str(self.config_parser.get('SIMULATION', 'TANK_THERMAL_MODE')).lower()
+            except Exception:
+                return 'adiabatic'
     
     def getNumericalScheme(self):
         return str(self.config_parser.get('SIMULATION', 'NUMERICAL_SCHEME')).lower() 
