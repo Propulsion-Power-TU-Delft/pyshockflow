@@ -8,6 +8,7 @@ from pathlib import Path
 from pyshockflow import RiemannProblem
 from pyshockflow import AdvectionRoeBase, AdvectionRoeArabi, AdvectionRoeVinokur, AdvectionHLLC, AdvectionAUSMplusUP
 from pyshockflow import FluidIdeal, FluidReal
+from pyshockflow.friction_models import create_friction_model
 from pyshockflow.output import Output
 from pyshockflow.math_utils import *
 from pyshockflow.roe_vectorized import (compute_roe_flux_ideal,
@@ -54,6 +55,8 @@ class Driver:
         self.topology = self.config.getTopology()
         self.isWallFrictionActive = self.config.isWallFrictionActive()
         self.frictionCoefficient = self.config.getFrictionCoefficient()
+        self.wallFrictionModel = self.config.getWallFrictionModel()
+        self.frictionModel = create_friction_model(self.config)
         self.isWallHeatTransferActive = self.config.isWallHeatTransferActive()
         self.wallHeatFlux = self.config.getWallHeatFlux()
         
@@ -757,13 +760,10 @@ class Driver:
     def computeFrictionSourceTerms(self, primitive):
         """compute source terms related to friction along the walls
         """
-        frictionCoefficient = self.frictionCoefficient 
         hydraulicDiameter = 4*self.areaTube/(np.pi*np.sqrt(self.areaTube/np.pi)*2)
-        Sm = -2.0 * frictionCoefficient * primitive['Density'] * primitive['Velocity'] * np.abs(primitive['Velocity']) / hydraulicDiameter
-        
-        source = np.zeros((self.nNodesHalo,3))
-        source[:,1] = Sm
-        return source
+        return self.frictionModel.compute_source_terms(
+            primitive, self.xNodesVirtual, self.dx, hydraulicDiameter, self.fluid
+        )
     
     def computeHeatTransferSourceTerms(self, primitive):
         """compute source term of energy eq. related to heat transfer along the walls.

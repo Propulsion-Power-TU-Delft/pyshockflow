@@ -196,6 +196,36 @@ class Config:
                 return False
         except:
             return False 
+
+    def getWallFrictionModel(self):
+        try:
+            return str(self.config_parser.get('SIMULATION', 'WALL_FRICTION_MODEL')).lower()
+        except:
+            return 'constant'
+
+    def getFrictionTransitionReynolds(self):
+        try:
+            return float(self.config_parser.get('SIMULATION', 'FRICTION_TRANSITION_REYNOLDS'))
+        except:
+            return 1.0e6
+
+    def getFrictionMaxCf(self):
+        try:
+            return float(self.config_parser.get('SIMULATION', 'FRICTION_MAX_CF'))
+        except:
+            return 0.1
+
+    def getFrictionDriverCf(self):
+        try:
+            return float(self.config_parser.get('SIMULATION', 'FRICTION_DRIVER_CF'))
+        except:
+            return self.getFrictionCoefficient()
+
+    def getShockDetectionThreshold(self):
+        try:
+            return float(self.config_parser.get('SIMULATION', 'SHOCK_DETECTION_THRESHOLD'))
+        except:
+            return 0.05 
     
     def isWallHeatTransferActive(self):
         try:

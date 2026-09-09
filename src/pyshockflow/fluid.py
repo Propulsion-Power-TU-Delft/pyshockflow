@@ -9,10 +9,22 @@ class FluidIdeal():
     """
     Ideal Fluid Class, where thermodynamic properties and transformation are computed with ideal gas laws
     """
-    def __init__(self, gmma, Rgas):
+    def __init__(self, gmma, Rgas, mu0=1.716e-5, T0=273.15, S=110.4):
         self.gmma = gmma
         self.Rgas = Rgas
+        self.mu0 = mu0
+        self.T0 = T0
+        self.S = S
     
+    def computeViscosity_p_T(self, p, T):
+        """Dynamic viscosity via Sutherland's law [Pa.s]"""
+        return self.mu0 * (T / self.T0)**1.5 * (self.T0 + self.S) / (T + self.S)
+
+    def computeViscosity_p_rho(self, p, rho):
+        """Dynamic viscosity via Sutherland's law using temperature computed from (p, rho) [Pa.s]"""
+        T = self.computeTemperature_p_rho(p, rho)
+        return self.computeViscosity_p_T(p, T)
+
     def computeStaticEnergy_p_rho(self, p, rho):
         return (p / (self.gmma - 1) / rho)
     
@@ -141,6 +153,7 @@ class RealGasLookupTable:
         grid_a = np.empty((self.nP, self.nT))
         grid_chi = np.empty((self.nP, self.nT))
         grid_kappa = np.empty((self.nP, self.nT))
+        grid_mu = np.empty((self.nP, self.nT))
 
         for i, p in enumerate(self.P_vec):
             for j, t in enumerate(self.T_vec):
@@ -154,6 +167,11 @@ class RealGasLookupTable:
                     except Exception:
                         a = 300.0
                     grid_a[i, j] = a
+                    try:
+                        mu = self.backend.viscosity()
+                    except Exception:
+                        mu = 1.8e-5
+                    grid_mu[i, j] = mu
                     dp_dU = self.backend.first_partial_deriv(CoolProp.iP, CoolProp.iUmass, CoolProp.iDmass)
                     kappa = dp_dU / grid_rho[i, j]
                     grid_kappa[i, j] = kappa
@@ -164,18 +182,21 @@ class RealGasLookupTable:
                     grid_a[i, j] = np.nan
                     grid_chi[i, j] = np.nan
                     grid_kappa[i, j] = np.nan
+                    grid_mu[i, j] = np.nan
 
         self.grid_rho = self._fill_nan_2d(grid_rho)
         self.grid_e = self._fill_nan_2d(grid_e)
         self.grid_a = self._fill_nan_2d(grid_a)
         self.grid_chi = self._fill_nan_2d(grid_chi)
         self.grid_kappa = self._fill_nan_2d(grid_kappa)
+        self.grid_mu = self._fill_nan_2d(grid_mu)
 
         self.spline_rho = RectBivariateSpline(self.log_P_vec, self.T_vec, self.grid_rho, kx=3, ky=3)
         self.spline_e = RectBivariateSpline(self.log_P_vec, self.T_vec, self.grid_e, kx=3, ky=3)
         self.spline_a = RectBivariateSpline(self.log_P_vec, self.T_vec, self.grid_a, kx=3, ky=3)
         self.spline_chi = RectBivariateSpline(self.log_P_vec, self.T_vec, self.grid_chi, kx=3, ky=3)
         self.spline_kappa = RectBivariateSpline(self.log_P_vec, self.T_vec, self.grid_kappa, kx=3, ky=3)
+        self.spline_mu = RectBivariateSpline(self.log_P_vec, self.T_vec, self.grid_mu, kx=3, ky=3)
 
     @staticmethod
     def _fill_nan_2d(arr):
@@ -244,6 +265,24 @@ class RealGasLookupTable:
         chi = self.spline_chi(log_p, T_arr, grid=False)
         kappa = self.spline_kappa(log_p, T_arr, grid=False)
         return (e[0], chi[0], kappa[0]) if scalar else (e, chi, kappa)
+
+    def computeViscosity_p_rho(self, p, rho):
+        scalar = np.isscalar(p)
+        p_arr = np.atleast_1d(p)
+        rho_arr = np.atleast_1d(rho)
+        T_arr = self.find_T_from_P_rho(p_arr, rho_arr)
+        log_p = np.log10(np.clip(p_arr, self.p_min, self.p_max))
+        mu = self.spline_mu(log_p, T_arr, grid=False)
+        return mu[0] if scalar else mu
+
+    def computeViscosity_p_T(self, p, T):
+        scalar = np.isscalar(p)
+        p_arr = np.atleast_1d(p)
+        T_arr = np.atleast_1d(T)
+        log_p = np.log10(np.clip(p_arr, self.p_min, self.p_max))
+        T_clamped = np.clip(T_arr, self.T_min, self.T_max)
+        mu = self.spline_mu(log_p, T_clamped, grid=False)
+        return mu[0] if scalar else mu
 
     def computePressure_rho_e(self, rho, e):
         scalar = np.isscalar(rho)
@@ -499,6 +538,60 @@ class FluidReal():
                 chi[i] = dp_drho_econst - e[i]/rho[i] * dp_de_rhoconst
                 kappa[i] = dp_de_rhoconst / rho[i]
         return e, chi, kappa
+
+    def computeViscosity_p_rho(self, p, rho):
+        """Dynamic viscosity from (p, rho) [Pa.s]"""
+        if self._lut is not None:
+            return self._lut.computeViscosity_p_rho(p, rho)
+        if np.isscalar(p):
+            if self._backend is not None:
+                try:
+                    import CoolProp
+                    self._backend.update(CoolProp.DmassP_INPUTS, float(rho), float(p))
+                    return self._backend.viscosity()
+                except Exception:
+                    pass
+            return FP.PropsSI("V", "P", p, "D", rho, self.fluid)
+        out = np.empty(len(p))
+        if self._backend is not None:
+            import CoolProp
+            for i in range(len(p)):
+                try:
+                    self._backend.update(CoolProp.DmassP_INPUTS, float(rho[i]), float(p[i]))
+                    out[i] = self._backend.viscosity()
+                except Exception:
+                    out[i] = FP.PropsSI("V", "P", p[i], "D", rho[i], self.fluid)
+        else:
+            for i in range(len(p)):
+                out[i] = FP.PropsSI("V", "P", p[i], "D", rho[i], self.fluid)
+        return out
+
+    def computeViscosity_p_T(self, p, T):
+        """Dynamic viscosity from (p, T) [Pa.s]"""
+        if self._lut is not None:
+            return self._lut.computeViscosity_p_T(p, T)
+        if np.isscalar(p):
+            if self._backend is not None:
+                try:
+                    import CoolProp
+                    self._backend.update(CoolProp.PT_INPUTS, float(p), float(T))
+                    return self._backend.viscosity()
+                except Exception:
+                    pass
+            return FP.PropsSI("V", "P", p, "T", T, self.fluid)
+        out = np.empty(len(p))
+        if self._backend is not None:
+            import CoolProp
+            for i in range(len(p)):
+                try:
+                    self._backend.update(CoolProp.PT_INPUTS, float(p[i]), float(T[i]))
+                    out[i] = self._backend.viscosity()
+                except Exception:
+                    out[i] = FP.PropsSI("V", "P", p[i], "T", T[i], self.fluid)
+        else:
+            for i in range(len(p)):
+                out[i] = FP.PropsSI("V", "P", p[i], "T", T[i], self.fluid)
+        return out
 
     def computeMach_u_p_rho(self, u, p, rho):
         soundSpeed = self.computeSoundSpeed_p_rho(p, rho)

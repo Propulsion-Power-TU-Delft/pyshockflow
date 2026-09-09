@@ -7,6 +7,15 @@ from .advection_ausm import AdvectionAUSMplusUP
 from .hllc_vectorized import compute_hllc_flux_ideal, compute_hllc_flux_real
 from .ausm_vectorized import compute_ausm_flux_ideal, compute_ausm_flux_real
 from .driver import Driver
+from .friction_models import (
+    FrictionModel,
+    ConstantFriction,
+    ShockTracker,
+    MirelsLaminarFriction,
+    MirelsTurbulentFriction,
+    MirelsTransitionalFriction,
+    create_friction_model,
+)
 
 __all__ = [
     "Config",
@@ -23,4 +32,11 @@ __all__ = [
     "compute_ausm_flux_ideal",
     "compute_ausm_flux_real",
     "Driver",
+    "FrictionModel",
+    "ConstantFriction",
+    "ShockTracker",
+    "MirelsLaminarFriction",
+    "MirelsTurbulentFriction",
+    "MirelsTransitionalFriction",
+    "create_friction_model",
 ]
