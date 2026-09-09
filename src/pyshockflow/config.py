@@ -226,6 +226,24 @@ class Config:
             return float(self.config_parser.get('SIMULATION', 'SHOCK_DETECTION_THRESHOLD'))
         except:
             return 0.05 
+
+    def isShockReflectionTrackingActive(self):
+        try:
+            res = str(self.config_parser.get('SIMULATION', 'SHOCK_REFLECTION_TRACKING')).lower()
+            if res in ['yes', 'true', '1']:
+                return True
+            elif res in ['no', 'false', '0']:
+                return False
+            else:
+                return True
+        except:
+            return True
+
+    def getWallReflectionThreshold(self):
+        try:
+            return float(self.config_parser.get('SIMULATION', 'WALL_REFLECTION_THRESHOLD'))
+        except:
+            return 1.15 
     
     def isWallHeatTransferActive(self):
         try:

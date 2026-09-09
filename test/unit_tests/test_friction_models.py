@@ -236,3 +236,109 @@ def test_create_friction_model_factory():
     assert isinstance(create_friction_model(DummyConfig('mirels_turbulent')), MirelsTurbulentFriction)
     assert isinstance(create_friction_model(DummyConfig('mirels_transitional')), MirelsTransitionalFriction)
     assert isinstance(create_friction_model(DummyConfig('unknown')), ConstantFriction)
+
+
+def test_shock_tracker_left_running():
+    """Verify detection and Rankine-Hugoniot speed for left-running incident shock."""
+    tracker = ShockTracker(pressure_threshold=0.05)
+    n = 100
+    x = np.linspace(0.0, 1.0, n)
+
+    # Shock at x=0.4 moving left:
+    # State 1 (left, x < 0.4): rho1=0.125, u1=0.0, p1=0.1
+    # State 2 (right, x >= 0.4): rho2=0.5, u2=-1.2, p2=0.8
+    rho = np.where(x < 0.4, 0.125, 0.5)
+    u = np.where(x < 0.4, 0.0, -1.2)
+    p = np.where(x < 0.4, 0.1, 0.8)
+    primitive = {'Density': rho, 'Velocity': u, 'Pressure': p}
+
+    found = tracker.detect(primitive, x)
+    assert found is True
+    assert tracker.direction == -1
+    assert tracker.wave_mode == 'incident_left'
+
+    # Shock speed via Rankine-Hugoniot:
+    # us = (rho2*u2 - rho1*u1) / (rho2 - rho1) = (0.5*(-1.2) - 0) / (0.5 - 0.125) = -0.6 / 0.375 = -1.6 < 0
+    expected_us = (0.5 * (-1.2) - 0.125 * 0.0) / (0.5 - 0.125)
+    assert tracker.u_shock == pytest.approx(expected_us, rel=1e-3)
+
+
+def test_shock_tracker_right_wall_reflection():
+    """Verify state machine transition to reflected_left upon end-wall collision."""
+    tracker = ShockTracker(pressure_threshold=0.05, enable_reflection=True, reflection_threshold=1.15)
+    n = 100
+    x = np.linspace(0.0, 1.0, n)
+
+    # Step 1: Incident shock near the right wall (x=0.96)
+    rho = np.where(x < 0.96, 0.5, 0.125)
+    u = np.where(x < 0.96, 1.2, 0.0)
+    p = np.where(x < 0.96, 0.8, 0.1)
+    # Right wall has not yet surged
+    primitive = {'Density': rho, 'Velocity': u, 'Pressure': p}
+    tracker.detect(primitive, x)
+    assert tracker.wave_mode == 'incident_right'
+
+    # Step 2: Shock hits right wall -> pressure surges to p5 = 2.0 >> 0.8, u stagnates
+    p_refl = np.where(x < 0.96, 0.8, 2.0)
+    u_refl = np.where(x < 0.96, 1.2, 0.0)
+    rho_refl = np.where(x < 0.96, 0.5, 1.2)
+    primitive_refl = {'Density': rho_refl, 'Velocity': u_refl, 'Pressure': p_refl}
+    tracker.detect(primitive_refl, x)
+    assert tracker.wave_mode == 'reflected_left'
+    assert tracker.direction == -1
+
+    # Step 3: Reflected shock moves left to x=0.85
+    # State 2 (left of 0.85): rho=0.5, u=1.2, p=0.8
+    # State 5 (right of 0.85): rho=1.2, u=0.0, p=2.0
+    rho_step3 = np.where(x < 0.85, 0.5, 1.2)
+    u_step3 = np.where(x < 0.85, 1.2, 0.0)
+    p_step3 = np.where(x < 0.85, 0.8, 2.0)
+    primitive_step3 = {'Density': rho_step3, 'Velocity': u_step3, 'Pressure': p_step3}
+    found = tracker.detect(primitive_step3, x)
+    assert found is True
+    assert tracker.wave_mode == 'reflected_left'
+    assert tracker.direction == -1
+    # Shock location should be near 0.85
+    assert abs(tracker.x_shock - 0.85) < 0.05
+
+    # Reflected shock speed WR < 0 via Rankine-Hugoniot:
+    # WR = (rho5*u5 - rho2*u2) / (rho5 - rho2) = (1.2*0 - 0.5*1.2) / (1.2 - 0.5) = -0.6 / 0.7 = -0.857
+    expected_wr = (1.2 * 0.0 - 0.5 * 1.2) / (1.2 - 0.5)
+    assert tracker.u_shock == pytest.approx(expected_wr, rel=1e-2)
+
+
+def test_mirels_friction_reflected_distances():
+    """Verify distance calculations and non-zero friction in oncoming State 2 during reflection."""
+    model = MirelsTurbulentFriction(pressure_threshold=0.05, max_cf=0.2, driver_cf=0.003, enable_reflection=True)
+    fluid = FluidIdeal(gmma=1.4, Rgas=287.0)
+
+    n = 100
+    x = np.linspace(0.0, 1.0, n)
+    dx = np.full(n, x[1] - x[0])
+
+    # Force reflected mode with reflected shock at x=0.75
+    model.tracker.wave_mode = 'reflected_left'
+    model.tracker.x_wall = 1.0
+    model.tracker.peak_post_shock_p = 0.8
+
+    # State 3 (driver, x < 0.3): rho=0.8, u=1.2, p=0.8
+    # State 2 (oncoming, 0.3 <= x < 0.75): rho=0.5, u=1.2, p=0.8
+    # State 5 (post-reflected, 0.75 <= x <= 1.0): rho=1.2, u=0.0, p=2.0
+    rho = np.where(x < 0.3, 0.8, np.where(x < 0.75, 0.5, 1.2))
+    u = np.where(x < 0.3, 1.2, np.where(x < 0.75, 1.2, 0.0))
+    p = np.where(x < 0.75, 0.8, 2.0)
+    primitive = {'Density': rho, 'Velocity': u, 'Pressure': p}
+
+    cf = model.compute_friction_coefficients(primitive, x, dx, fluid)
+
+    # 1. Driver gas (x < 0.3): Cf == driver_cf = 0.003
+    assert np.all(cf[x < 0.25] == 0.003)
+
+    # 2. Oncoming State 2 gas (0.35 <= x < 0.75):
+    # Must have non-zero Cf because it's moving at u=1.2 towards the wall!
+    assert np.all(cf[(x >= 0.35) & (x < 0.73)] > 0.0)
+
+    # 3. Post-reflected State 5 gas (x > 0.75):
+    # Cf is computed based on distance from reflected shock x - x_shock
+    assert np.all(cf[x > 0.76] > 0.0)
+
