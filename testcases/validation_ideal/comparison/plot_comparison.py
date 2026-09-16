@@ -11,6 +11,8 @@ testNumber = [1,3,5]
 analyticalResults = ['../analytical/solutions/Test%i.pik' % i for i in testNumber]
 godunovResults = ['../godunov/Results/Test%i_NX_100/Results.pik' % i for i in testNumber]
 roeResults = ['../roe/Results/Test%i_NX_100/Results.pik' % i for i in testNumber]
+hllcResults = ['../hllc/Results/Test%i_NX_100/Results.pik' % i for i in testNumber]
+ausmResults = ['../ausm+/Results/Test%i_NX_100/Results.pik' % i for i in testNumber]
 
 set_thesis_style()
 
@@ -60,6 +62,38 @@ for iInput in range(len(analyticalResults)):
             res['Primitive']['Pressure'][1:-1,-1],
             '-.')
     
+    # HLLC
+    with open(hllcResults[iInput], 'rb') as file:
+        res = pickle.load(file)
+        ax[0].plot(
+            res['X Coords'][1:-1], 
+            res['Primitive']['Density'][1:-1,-1],
+            ':', label=r'HLLC', mfc='none')
+        ax[1].plot(
+            res['X Coords'][1:-1], 
+            res['Primitive']['Velocity'][1:-1,-1],
+            ':')
+        ax[2].plot(
+            res['X Coords'][1:-1], 
+            res['Primitive']['Pressure'][1:-1,-1],
+            ':')
+    
+    # AUSM
+    with open(ausmResults[iInput], 'rb') as file:
+        res = pickle.load(file)
+        ax[0].plot(
+            res['X Coords'][1:-1], 
+            res['Primitive']['Density'][1:-1,-1],
+            '-', label=r'AUSM+', mfc='none')
+        ax[1].plot(
+            res['X Coords'][1:-1], 
+            res['Primitive']['Velocity'][1:-1,-1],
+            '-')
+        ax[2].plot(
+            res['X Coords'][1:-1], 
+            res['Primitive']['Pressure'][1:-1,-1],
+            '-')
+    
     for axx in ax:
             axx.set_xlabel(r'$x$')
             axx.grid(alpha=.3)
@@ -69,7 +103,7 @@ for iInput in range(len(analyticalResults)):
     ax[2].set_ylabel(r'$p$')
     
     # Add a single legend at the bottom center
-    fig.legend(loc='outside upper center', ncol=3)
+    fig.legend(loc='outside upper center', ncol=5)
     # Adjust layout to make room for the legend
     
     fig.savefig('Pictures/Test%i.pdf' % testNumber[iInput])

@@ -6,6 +6,8 @@ import pickle
 import os
 import matplotlib.pyplot as plt
 import numpy as np
+from pyshockflow.thesis_plots import *
+set_thesis_style()
 
 def plot_comparison():
     file_exact = 'Results/real_exact_NX_500/Results.pik'
@@ -35,34 +37,32 @@ def plot_comparison():
     u_exact = res_exact['Primitive']['Velocity'][:, last_idx]
     u_lut = res_lut['Primitive']['Velocity'][:, last_idx]
     
-    fig, axs = plt.subplots(3, 1, figsize=(10, 11), sharex=True)
+    fig, axs = create_figure(fraction=1.0, aspect_ratio=0.7, subplots=(1, 3), is_print=False)
     
     # 1. Pressure
-    axs[0].plot(x_nodes, p_exact * 1e-5, 'k-', linewidth=2, label='Exact Helmholtz EoS')
-    axs[0].plot(x_nodes[::25], p_lut[::25] * 1e-5, 'r--', markersize=4, label='LuT Splines (250x250)')
-    axs[0].set_title(f'Real CO2 Shock Tube (1000 pts) at t = {t_final*1e3:.2f} ms')
-    axs[0].set_ylabel('Pressure [bar]')
+    axs[0].plot(x_nodes, p_exact * 1e-5, 'k-', label='Exact Helmholtz EoS')
+    axs[0].plot(x_nodes[::25], p_lut[::25] * 1e-5, 'r--', label='LuT (250x250)')
+    axs[0].set_ylabel(r'$P$ [bar]')
+    axs[0].set_xlabel(r'$x$ [m]')
     axs[0].grid(True, linestyle='--', alpha=0.6)
-    axs[0].legend(loc='best')
     
     # 2. Density
-    axs[1].plot(x_nodes, rho_exact, 'k-', linewidth=2, label='Exact Helmholtz EoS')
-    axs[1].plot(x_nodes[::25], rho_lut[::25], 'r--', markersize=4, label='LuT Splines (250x250)')
-    axs[1].set_ylabel('Density [kg/m³]')
+    axs[1].plot(x_nodes, rho_exact, 'k-')
+    axs[1].plot(x_nodes[::25], rho_lut[::25], 'r--')
+    axs[1].set_ylabel(r'$\rho$ [kg/m$^3$]')
+    axs[1].set_xlabel(r'$x$ [m]')
     axs[1].grid(True, linestyle='--', alpha=0.6)
-    axs[1].legend(loc='best')
     
     # 3. Velocity
-    axs[2].plot(x_nodes, u_exact, 'k-', linewidth=2, label='Exact Helmholtz EoS')
-    axs[2].plot(x_nodes[::25], u_lut[::25], 'r--', markersize=4, label='LuT Splines (250x250)')
-    axs[2].set_xlabel('x [m]')
-    axs[2].set_ylabel('Velocity [m/s]')
+    axs[2].plot(x_nodes, u_exact, 'k-')
+    axs[2].plot(x_nodes[::25], u_lut[::25], 'r--')
+    axs[2].set_xlabel(r'$x$ [m]')
+    axs[2].set_ylabel(r'$u$ [m/s]')
     axs[2].grid(True, linestyle='--', alpha=0.6)
-    axs[2].legend(loc='best')
     
-    plt.tight_layout()
-    out_img = 'comparison_plot.png'
-    plt.savefig(out_img, dpi=200)
+    fig.legend(ncol=2, loc='outside upper center')
+    out_img = 'comparison_plot.pdf'
+    plt.savefig(out_img)
     print(f"Comparison plot successfully saved to: {out_img}")
 
 if __name__ == '__main__':
