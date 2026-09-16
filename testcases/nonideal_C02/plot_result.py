@@ -3,7 +3,8 @@ import numpy as np
 import pickle
 from pyshockflow import RiemannProblem
 from pyshockflow import Driver
-from pyshockflow.thesis_plots import *
+# from pyshockflow.thesis_plots import *
+from pyshockflow.nicfd_styles import *
 import os
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes, mark_inset
 
@@ -36,7 +37,7 @@ lss = [
     '--',
 ]
 
-set_thesis_style()
+set_nicfd_style()
 msbig = 2.5
 ms_small = 2.0
 fig, ax = create_figure(fraction=1.0, aspect_ratio=1.0, subplots=(1, 3))
