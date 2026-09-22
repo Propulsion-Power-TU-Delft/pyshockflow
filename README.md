@@ -21,6 +21,11 @@
   - [2. Running via Python API](#2-running-via-python-api)
   - [3. Post-Processing & Results](#3-post-processing--results)
 - [Input Configuration Reference (`input.ini`)](#input-configuration-reference-inputini)
+  - [Complete Annotated `input.ini` Template](#complete-annotated-inputini-template)
+  - [1. Geometry Configuration (`[GEOMETRY]`)](#1-geometry-configuration-geometry)
+  - [2. Simulation & Numerical Configuration (`[SIMULATION]`)](#2-simulation--numerical-configuration-simulation)
+  - [3. Fluid & Thermodynamic Configuration (`[FLUID]`)](#3-fluid--thermodynamic-configuration-fluid)
+  - [4. Output & Post-Processing Configuration (`[OUTPUT]`)](#4-output--post-processing-configuration-output)
 - [Numerical Methods & Physical Models](#numerical-methods--physical-models)
   - [Governing Equations](#governing-equations)
   - [Riemann Solvers & Numerical Fluxes](#riemann-solvers--numerical-fluxes)
@@ -200,121 +205,367 @@ plt.show()
 
 ## Input Configuration Reference (`input.ini`)
 
-The simulation settings are configured via an INI file containing four main sections:
+Simulations in `pyshockflow` are configured through a standard INI configuration file (conventionally named `input.ini`). The file is structured into four main sections:
+- **`[GEOMETRY]`**: Physical domain dimensions, diaphragm interface location, and duct/nozzle topology.
+- **`[SIMULATION]`**: Grid resolution, time integration, initial flow states, numerical Riemann schemes, boundary conditions, wall friction models, heat transfer, and coupled 0D tanks.
+- **`[FLUID]`**: Working fluid identity, thermodynamic equation of state (ideal gas or real-gas CoolProp HEOS), and Look-Up Table (LuT) acceleration settings.
+- **`[OUTPUT]`**: Result directories, file prefixes, snapshot frequencies, and live visualization controls.
+
+> [!TIP]
+> In INI files, section names and option keys are case-insensitive, but uppercase is recommended by convention. Boolean values can be written as `yes` / `no`, `true` / `false`, or `1` / `0`.
+
+---
+
+### Complete Annotated `input.ini` Template
+
+Below is a complete `input.ini` template showcasing all available configuration options with descriptive comments:
 
 ```ini
 [GEOMETRY]
-; Total tube / duct length [m]
+; Total tube / nozzle domain length [m]
 LENGTH = 1.0
 
-; Initial diaphragm / interface position [m]
+; Initial diaphragm / interface position separating Left and Right states [m]
 INTERFACE_LOCATION = 0.5
 
-; Domain topology: 'default' (constant cross-section) or 'nozzle' (variable area)
+; Domain topology: 'default' (constant cross-section) or 'nozzle' (variable area profile)
 TOPOLOGY = default
 
-; Path to CSV file specifying nozzle area profile x, A(x) (only if TOPOLOGY = nozzle)
-NOZZLE_FILEPATH = nozzle.csv
-
-; Reference cross-sectional area [m^2]
+; Reference cross-sectional area [m^2] (tube area or nominal nozzle scale)
 REFERENCE_AREA = 1.0e-4
+
+; Path to CSV file with columns (x, A) specifying nozzle area distribution (required if TOPOLOGY = nozzle)
+; NOZZLE_FILEPATH = nozzle.csv
 
 
 [SIMULATION]
-; Number of grid cells in the physical domain
+; --- Grid Discretization & Time-Stepping ---
+; Number of physical grid cells (halo cells are added automatically)
 NUMBER_POINTS = 500
 
-; Simulation time limit [s] and maximum CFL condition (< 1.0)
+; Simulation time limit [s]
 TIME_MAX = 0.002
-CFL_MAX = 0.85
-TIME_STEP_METHOD = adaptive    ; 'adaptive' or 'constant'
 
-; Initial states (Left: high-pressure driver, Right: low-pressure driven)
-PRESSURE_LEFT = 1.0e6          ; Static pressure [Pa]
+; Maximum allowable CFL number (< 1.0 for explicit Euler time marching)
+CFL_MAX = 0.85
+
+; Time-step evaluation method: 'adaptive' (recalculated every step) or 'constant' (fixed from initial state)
+TIME_STEP_METHOD = adaptive
+
+; Simulation mode: 'unsteady' (time-accurate wave dynamics) or 'steady' (residual convergence)
+SIMULATION_TYPE = unsteady
+
+
+; --- Initial Conditions (Left: driver region x <= INTERFACE_LOCATION, Right: driven region x > INTERFACE_LOCATION) ---
+PRESSURE_LEFT = 1.0e6          ; Initial static pressure [Pa]
 PRESSURE_RIGHT = 1.0e5
-TEMPERATURE_LEFT = 300.0       ; Static temperature [K]
+
+TEMPERATURE_LEFT = 300.0       ; Initial static temperature [K] (alternative to DENSITY_LEFT)
 TEMPERATURE_RIGHT = 300.0
+
+; DENSITY_LEFT = 1.1614        ; Optional alternative: specify density [kg/m^3] instead of temperature
+; DENSITY_RIGHT = 1.1614
+
 VELOCITY_LEFT = 0.0            ; Initial flow velocity [m/s]
 VELOCITY_RIGHT = 0.0
 
-; Boundary conditions: 'reflective', 'transparent', 'periodic', 'inlet', 'outlet', 'tank'
-BOUNDARY_CONDITION_LEFT = reflective
-BOUNDARY_CONDITION_RIGHT = transparent
+; Optional path to a previous Results.pik file to warm-restart the simulation
+; RESTART_FILE = Results/PreviousRun_NX_500.pik
 
-; Numerical Scheme: 'godunov', 'roe', 'roe_arabi', 'roe_vinokur', 'hllc', 'ausm+up'
+
+; --- Numerical Scheme & Spatial Reconstruction ---
+; Riemann solver: 'godunov', 'roe', 'roe_arabi', 'roe_vinokur', 'hllc', 'ausm+up'
 NUMERICAL_SCHEME = roe
 
-; High-order spatial accuracy (2nd order MUSCL)
-MUSCL_RECONSTRUCTION = yes     ; 'yes' or 'no'
-FLUX_LIMITER = van albada      ; 'van albada', 'van leer', 'minmod', 'superbee'
+; Spatial reconstruction: 'yes' (2nd-order MUSCL) or 'no' (1st-order Godunov)
+MUSCL_RECONSTRUCTION = yes
 
-; Entropy fix for Roe-type schemes (Harten-Hyman)
+; TVD slope limiter for MUSCL: 'van albada', 'van leer', 'minmod' (or 'min-mod'), 'superbee', 'none'
+FLUX_LIMITER = van albada
+
+; Entropy fix for Roe-type schemes (Harten-Hyman formulation)
 ENTROPY_FIX_ACTIVE = yes
 ENTROPY_FIX_COEFFICIENT = 0.2
 
-; Simulation type: 'unsteady' (wave dynamics) or 'steady' (residual convergence)
-SIMULATION_TYPE = unsteady
 
-; Optional localized mesh refinement
-MESH_REFINEMENT = no
-X_START_REFINEMENT = 0.45
-X_END_REFINEMENT = 0.55
-NUMBER_POINTS_REFINEMENT = 200
-ADAPT_MESH_REFINEMENT = yes
+; --- Boundary Conditions ---
+; Available types: 'reflective', 'transparent', 'periodic', 'inlet', 'outlet', 'tank'
+BOUNDARY_CONDITION_LEFT = reflective
+BOUNDARY_CONDITION_RIGHT = transparent
 
-; Wall friction options
-WALL_FRICTION_ACTIVE = no      ; 'yes' or 'no'
-WALL_FRICTION_MODEL = constant ; 'constant', 'mirels_laminar', 'mirels_turbulent', 'mirels_transitional'
-FRICTION_COEFFICIENT = 0.003   ; Darcy-Weisbach / Fanning factor (for constant model)
-FRICTION_MAX_CF = 0.1          ; Maximum skin friction cutoff
-FRICTION_DRIVER_CF = 0.003     ; Skin friction in driver gas behind contact surface
-FRICTION_TRANSITION_REYNOLDS = 1.0e6 ; Transition Reynolds number
+; Prescribed inlet stagnation state: total_pressure [Pa], total_temperature [K], flow_direction [+1 or -1]
+; Required if BOUNDARY_CONDITION_LEFT or RIGHT = inlet
+; INLET_CONDITIONS = 101325, 288.15, 1
 
-; Shock tracking & reflection settings (for Mirels friction)
+; Prescribed static backpressure [Pa] for subsonic outflow
+; Required if BOUNDARY_CONDITION_LEFT or RIGHT = outlet (switches to transparent if supersonic M >= 1)
+; OUTLET_CONDITIONS = 45000
+
+
+; --- Coupled 0D Lumped-Parameter Tank Reservoir (if BOUNDARY_CONDITION_LEFT or RIGHT = tank) ---
+; Tank volume [m^3] (can also use TANK_VOLUME_LEFT and TANK_VOLUME_RIGHT for independent reservoirs)
+TANK_VOLUME = 0.05
+
+; Initial tank static pressure [Pa] (or TANK_INITIAL_PRESSURE_LEFT / TANK_INITIAL_PRESSURE_RIGHT)
+TANK_INITIAL_PRESSURE = 1.0e5
+
+; Initial tank static temperature [K] (or TANK_INITIAL_TEMPERATURE_LEFT / TANK_INITIAL_TEMPERATURE_RIGHT)
+TANK_INITIAL_TEMPERATURE = 300.0
+
+; Tank thermal model: 'adiabatic' (solves internal energy ODE) or 'isothermal' (constant temperature)
+TANK_THERMAL_MODE = adiabatic
+
+
+; --- Wall Friction & Shock-Induced Boundary Layer ---
+; Activate wall shear stress momentum source term: 'yes' or 'no'
+WALL_FRICTION_ACTIVE = no
+
+; Friction model: 'constant', 'mirels_laminar', 'mirels_turbulent', 'mirels_transitional'
+WALL_FRICTION_MODEL = constant
+
+; Darcy-Weisbach / Fanning friction coefficient for constant model
+FRICTION_COEFFICIENT = 0.003
+
+; Maximum skin friction coefficient cutoff to regularize shock-front singularities
+FRICTION_MAX_CF = 0.1
+
+; Skin friction coefficient applied to the driver gas behind the contact surface
+FRICTION_DRIVER_CF = 0.003
+
+; Transition Reynolds number for 'mirels_transitional' model
+FRICTION_TRANSITION_REYNOLDS = 1.0e6
+
+; Track moving shock and contact surface for spatial Mirels boundary layer growth
 SHOCK_REFLECTION_TRACKING = yes
+
+; Relative pressure jump threshold (delta_p / p) for shock front detection
 SHOCK_DETECTION_THRESHOLD = 0.05
+
+; Pressure jump multiplier threshold at solid walls to trigger reflected shock tracking
 WALL_REFLECTION_THRESHOLD = 1.15
 
-; Wall heat transfer
+
+; --- Prescribed Wall Heat Transfer ---
+; Activate wall thermal source term: 'yes' or 'no'
 WALL_HEAT_TRANSFER_ACTIVE = no
-WALL_HEAT_FLUX = 0.0           ; Prescribed heat flux [W/m^2]
 
-; 0D Tank Boundary Parameters (if BOUNDARY_CONDITION_LEFT or RIGHT = tank)
-TANK_VOLUME = 0.05             ; Reservoir volume [m^3]
-TANK_INITIAL_PRESSURE = 1.0e5  ; Initial tank pressure [Pa]
-TANK_INITIAL_TEMPERATURE = 300.0 ; Initial tank temperature [K]
-TANK_THERMAL_MODE = adiabatic  ; 'adiabatic' or 'isothermal'
+; Prescribed wall heat flux [W/m^2] (positive = fluid heating, negative = fluid cooling)
+WALL_HEAT_FLUX = 0.0
 
-; 2D Look-Up Table (LuT) Acceleration (for real gas)
-USE_LUT = no                   ; 'yes' or 'no'
-LUT_PRESSURE_MIN = 5.0e5       ; Min pressure bound [Pa]
-LUT_PRESSURE_MAX = 1.0e8       ; Max pressure bound [Pa]
-LUT_TEMPERATURE_MIN = 250.0    ; Min temperature bound [K]
-LUT_TEMPERATURE_MAX = 1500.0   ; Max temperature bound [K]
-LUT_GRID_SIZE = 250, 250       ; Grid resolution (nP, nT)
+
+; --- Localized Mesh Refinement ---
+; Enable localized grid refinement: 'yes' or 'no'
+MESH_REFINEMENT = no
+
+; Axial coordinates defining the refinement zone [m]
+X_START_REFINEMENT = 0.45
+X_END_REFINEMENT = 0.55
+
+; Number of grid cells placed inside the refined segment
+NUMBER_POINTS_REFINEMENT = 200
+
+; Smooth geometric stretching at the extremities of the refined region: 'yes' or 'no'
+ADAPT_MESH_REFINEMENT = yes
 
 
 [FLUID]
-; Fluid name in CoolProp database (e.g., 'air', 'CO2', 'N2', 'MDM', 'MM')
+; Fluid name recognized by CoolProp database (e.g., 'air', 'CO2', 'N2', 'MDM', 'MM', 'water')
 FLUID_NAME = air
 
-; Thermodynamic model: 'ideal' or 'real'
+; Thermodynamic model: 'ideal' (ideal gas EOS) or 'real' (multi-parameter Helmholtz EOS)
 FLUID_MODEL = ideal
 
 ; Ideal gas parameters (used when FLUID_MODEL = ideal)
-FLUID_GAMMA = 1.4
-GAS_R_CONSTANT = 287.05
+FLUID_GAMMA = 1.4              ; Ratio of specific heats cp/cv [-]
+GAS_R_CONSTANT = 287.05        ; Specific gas constant [J/(kg K)]
 
-; Real gas library (used when FLUID_MODEL = real)
+; Real gas thermodynamic backend library: 'CoolProp' (default), 'RefProp', 'StanMix', 'PCP-SAFT'
 FLUID_LIBRARY = CoolProp
+
+; --- 2D Look-Up Table (LuT) Real-Gas Acceleration (can also be specified under [SIMULATION]) ---
+; Enable 2D bicubic spline Look-Up Table acceleration for real gas thermodynamics
+USE_LUT = no
+
+; Pressure range for logarithmic interpolation grid [Pa]
+LUT_PRESSURE_MIN = 5.0e5
+LUT_PRESSURE_MAX = 1.0e8
+
+; Temperature range for linear interpolation grid [K]
+LUT_TEMPERATURE_MIN = 250.0
+LUT_TEMPERATURE_MAX = 1500.0
+
+; Grid resolution (nP, nT) for the Look-Up Table (max 1000x1000)
+LUT_GRID_SIZE = 250, 250
 
 
 [OUTPUT]
+; Output directory for results and snapshots
 FOLDER_NAME = Results
+
+; Base filename prefix for exported solution files
 FILE_NAME = SimulationRun
-OUTPUT_FREQUENCY = 100         ; Dump snapshot every N iterations
-SHOW_ANIMATION = no            ; Show live animation during run
+
+; Snapshot dump frequency (save solution arrays every N iterations)
+OUTPUT_FREQUENCY = 100
+
+; Show live interactive Matplotlib animation of solution during calculation
+SHOW_ANIMATION = no
 ```
+
+---
+
+### 1. Geometry Configuration (`[GEOMETRY]`)
+
+The `[GEOMETRY]` section defines physical duct/tube lengths, the position of the initial discontinuity, and the cross-sectional area topology.
+
+| Parameter | Type | Default | Units | Description |
+| :--- | :---: | :---: | :---: | :--- |
+| `LENGTH` | `float` | **Required** | $\text{m}$ | Total physical axial length of the computational domain ($L$). |
+| `INTERFACE_LOCATION` | `float` | **Required** | $\text{m}$ | Axial position ($x_d \in (0, L)$) of the initial diaphragm or discontinuity separating Left and Right states. |
+| `TOPOLOGY` | `string` | `'default'` | — | Duct geometry mode: `'default'` for a constant cross-section duct ($A(x) = A_{\text{ref}}$), or `'nozzle'` for variable-area profiles ($A(x)$ loaded from file). |
+| `REFERENCE_AREA` | `float` | `1.0` | $\text{m}^2$ | Reference cross-sectional area ($A_{\text{ref}}$). Defines constant area under `'default'` topology, or nominal reference scale under `'nozzle'`. |
+| `NOZZLE_FILEPATH` | `string` | — | — | Path to a CSV file specifying nozzle coordinates ($x$, $A(x)$). Required when `TOPOLOGY = nozzle`. |
+
+> [!NOTE]
+> When `TOPOLOGY = nozzle`, `pyshockflow` reads the CSV file specified in `NOZZLE_FILEPATH` (with two columns: axial coordinate $x$ [m] and area $A(x)$ [m²]) and computes the continuous distribution $A(x)$ and geometric area gradient $\frac{dA}{dx}$ across all cells, evaluating quasi-1D source terms following Vimercati & Guardone (2018).
+
+---
+
+### 2. Simulation & Numerical Configuration (`[SIMULATION]`)
+
+The `[SIMULATION]` section controls the grid discretization, time marching, initial flow states, numerical Riemann schemes, boundary conditions, and physical source terms.
+
+#### A. Grid & Temporal Discretization
+
+| Parameter | Type | Default | Units | Description |
+| :--- | :---: | :---: | :---: | :--- |
+| `NUMBER_POINTS` | `int` | **Required** | — | Number of physical finite-volume cells ($N_x$) along the domain (excluding boundary halo cells). |
+| `TIME_MAX` | `float` | **Required** | $\text{s}$ | Final physical simulation stop time ($t_{\text{max}}$). |
+| `CFL_MAX` | `float` | **Required** | — | Maximum Courant–Friedrichs–Lewy number ($\le 1.0$ for explicit Euler stability; recommended: $0.7 - 0.9$). |
+| `TIME_STEP_METHOD` | `string` | `'constant'` | — | Time-step calculation: `'adaptive'` recomputes $\Delta t = \text{CFL} \cdot \min_i \frac{\Delta x_i}{\|u_i\| + a_i}$ at each iteration; `'constant'` fixes $\Delta t$ based on initial conditions. |
+| `SIMULATION_TYPE` | `string` | `'unsteady'` | — | Solver mode: `'unsteady'` performs time-accurate wave evolution; `'steady'` monitors residual $L_2$-norm $\|R\|$ until stationary convergence (ideal for nozzle flows). |
+
+#### B. Initial Flow States & Restart
+
+The initial state across the domain is defined as a Riemann problem between Left ($x \le x_d$) and Right ($x > x_d$) chambers. States can be prescribed via $(p, T)$ or $(p, \rho)$ pairs:
+
+| Parameter | Type | Default | Units | Description |
+| :--- | :---: | :---: | :---: | :--- |
+| `PRESSURE_LEFT` | `float` | **Required** | $\text{Pa}$ | Initial static pressure in the Left (driver) chamber. |
+| `PRESSURE_RIGHT` | `float` | **Required** | $\text{Pa}$ | Initial static pressure in the Right (driven) chamber. |
+| `TEMPERATURE_LEFT` | `float` | Optional* | $\text{K}$ | Initial static temperature in Left chamber (*required if `DENSITY_LEFT` is not specified). |
+| `TEMPERATURE_RIGHT`| `float` | Optional* | $\text{K}$ | Initial static temperature in Right chamber (*required if `DENSITY_RIGHT` is not specified). |
+| `DENSITY_LEFT` | `float` | Optional* | $\text{kg/m}^3$ | Initial static density in Left chamber (if given, temperature is computed via EOS). |
+| `DENSITY_RIGHT` | `float` | Optional* | $\text{kg/m}^3$ | Initial static density in Right chamber (if given, temperature is computed via EOS). |
+| `VELOCITY_LEFT` | `float` | **Required** | $\text{m/s}$ | Initial velocity in Left chamber (typically `0.0` for shock tubes). |
+| `VELOCITY_RIGHT` | `float` | **Required** | $\text{m/s}$ | Initial velocity in Right chamber (typically `0.0` for shock tubes). |
+| `RESTART_FILE` | `string` | `None` | — | Path to a previously dumped solution pickle file (`Results.pik`) to warm-start the simulation via 1D spatial interpolation onto the current grid. |
+
+#### C. Numerical Flux Schemes & High-Order MUSCL
+
+| Parameter | Type | Default | Description |
+| :--- | :---: | :---: | :--- |
+| `NUMERICAL_SCHEME` | `string` | **Required** | Numerical flux algorithm: <br>• `'godunov'`: Exact iterative Riemann solver (ideal gas only). <br>• `'roe'`: Classic Roe approximate solver with parameter vector averaging (ideal gas). <br>• `'roe_arabi'`: Real-gas Roe solver using Arabi et al. (2017) sound-speed averaging. <br>• `'roe_vinokur'`: Generalized real-gas Roe projection via Vinokur & Montagné (1990) pressure derivatives ($\chi, \kappa$). <br>• `'hllc'`: Harten-Lax-van Leer Contact restoring two-wave solver (ideal & real fluids). <br>• `'ausm+up'`: Liou (2006) Advection Upstream Splitting Method for all speeds and real gases. |
+| `MUSCL_RECONSTRUCTION` | `bool` | `no` | Enables 2nd-order spatial accuracy via Monotonic Upstream-Centered Scheme for Conservation Laws (MUSCL) reconstruction on primitive variables $(\rho, u, p)$. |
+| `FLUX_LIMITER` | `string` | `'van albada'`| TVD slope limiter to ensure monotonicity near shocks. Options: `'van albada'`, `'van leer'`, `'minmod'` (or `'min-mod'`), `'superbee'`, `'none'`. |
+| `ENTROPY_FIX_ACTIVE` | `bool` | `yes` | Enables Harten–Hyman entropy fix for Roe-type schemes to prevent unphysical expansion shocks and sonic carbuncles. |
+| `ENTROPY_FIX_COEFFICIENT` | `float` | `0.2` | Threshold parameter $\delta_{\text{HH}}$ scaling the eigenvalue smoothing width in the Harten–Hyman entropy fix. |
+
+#### D. Boundary Conditions
+
+| Parameter | Type | Default | Description |
+| :--- | :---: | :---: | :--- |
+| `BOUNDARY_CONDITION_LEFT` | `string` | **Required** | Physical boundary condition at $x = 0$. Options: `'reflective'`, `'transparent'`, `'periodic'`, `'inlet'`, `'outlet'`, `'tank'`. |
+| `BOUNDARY_CONDITION_RIGHT`| `string` | **Required** | Physical boundary condition at $x = L$. Options: `'reflective'`, `'transparent'`, `'periodic'`, `'inlet'`, `'outlet'`, `'tank'`. |
+| `INLET_CONDITIONS` | `list[float]` | — | Comma-separated tuple `p_tot, T_tot, direction` specifying total pressure [Pa], total temperature [K], and direction sign ($+1$ entering domain to the right, $-1$ entering domain to the left). Required if boundary is `'inlet'`. |
+| `OUTLET_CONDITIONS` | `float` | — | Prescribed static backpressure $p_{\text{out}}$ [Pa] for subsonic exit flow. When the exit Mach number is supersonic ($M \ge 1$), the boundary automatically transitions to non-reflective transparent. Required if boundary is `'outlet'`. |
+
+#### E. Coupled 0D Lumped-Parameter Tank Reservoir
+
+When `BOUNDARY_CONDITION_LEFT` or `RIGHT` is set to `'tank'`, a zero-dimensional reservoir is coupled to that boundary to model blowdown or charging. Parameters can be set globally or separately per boundary with `_LEFT` and `_RIGHT` suffixes:
+
+| Parameter | Type | Default | Units | Description |
+| :--- | :---: | :---: | :---: | :--- |
+| `TANK_VOLUME` | `float` | `0.1` | $\text{m}^3$ | Reservoir volume ($V$). Override for a specific side with `TANK_VOLUME_LEFT` or `TANK_VOLUME_RIGHT`. |
+| `TANK_INITIAL_PRESSURE` | `float` | `1.0e5` | $\text{Pa}$ | Initial tank static pressure. Override with `TANK_INITIAL_PRESSURE_LEFT` or `TANK_INITIAL_PRESSURE_RIGHT`. |
+| `TANK_INITIAL_TEMPERATURE`| `float` | `300.0` | $\text{K}$ | Initial tank static temperature. Override with `TANK_INITIAL_TEMPERATURE_LEFT` or `TANK_INITIAL_TEMPERATURE_RIGHT`. |
+| `TANK_THERMAL_MODE` | `string` | `'adiabatic'`| — | Thermodynamic evolution of the tank: `'adiabatic'` (solves internal energy ODE $\frac{dU}{dt} = \dot{m} h_{\text{tot}}$) or `'isothermal'` ($T = \text{const}$). Override with `_LEFT` / `_RIGHT`. |
+
+#### F. Wall Friction & Shock-Induced Boundary Layer
+
+| Parameter | Type | Default | Description |
+| :--- | :---: | :---: | :--- |
+| `WALL_FRICTION_ACTIVE` | `bool` | `no` | Activates the wall shear stress momentum sink term: $- \frac{1}{2}\rho u \|u\| C_f P_w$. |
+| `WALL_FRICTION_MODEL` | `string` | `'constant'` | Friction formulation: <br>• `'constant'`: Uniform Darcy/Fanning friction factor $C_f = \text{const}$. <br>• `'mirels_laminar'`: Laminar boundary layer behind shock ($C_f = 0.664 / \sqrt{Re_x}$, NACA TN 3401). <br>• `'mirels_turbulent'`: Turbulent boundary layer behind shock ($C_f = 0.0592 / Re_x^{0.2}$, NACA TN 3712 / AIAA J. 1964). <br>• `'mirels_transitional'`: Switches dynamically from laminar to turbulent at $Re_{\text{tr}}$. |
+| `FRICTION_COEFFICIENT` | `float` | `0.003` | Constant skin friction coefficient $C_f$ used when `WALL_FRICTION_MODEL = constant`. |
+| `FRICTION_DRIVER_CF` | `float` | `FRICTION_COEFFICIENT` | Skin friction coefficient applied in the driver gas region behind the contact discontinuity. |
+| `FRICTION_MAX_CF` | `float` | `0.1` | Maximum allowable skin friction cutoff to regularize integrable singularities near the shock front. |
+| `FRICTION_TRANSITION_REYNOLDS` | `float` | `1.0e6` | Critical transition Reynolds number $Re_{\text{tr}}$ used when `WALL_FRICTION_MODEL = mirels_transitional`. |
+| `SHOCK_REFLECTION_TRACKING` | `bool` | `yes` | Enables bidirectional tracking of incident shock waves and their solid-wall reflections for Mirels boundary layer growth. |
+| `SHOCK_DETECTION_THRESHOLD` | `float` | `0.05` | Relative pressure jump $(\Delta p / p)$ threshold used by `ShockTracker` to identify the moving shock front. |
+| `WALL_REFLECTION_THRESHOLD` | `float` | `1.15` | Wall pressure increase factor threshold signaling that shock reflection has taken place. |
+
+#### G. Wall Heat Transfer
+
+| Parameter | Type | Default | Units | Description |
+| :--- | :---: | :---: | :---: | :--- |
+| `WALL_HEAT_TRANSFER_ACTIVE`| `bool` | `no` | — | Activates wall heat transfer source term in the energy equation ($q_w P_w$). |
+| `WALL_HEAT_FLUX` | `float` | `0.0` | $\text{W/m}^2$ | Prescribed wall heat flux $q_w$. Positive values indicate heating into the fluid; negative values indicate wall cooling. |
+
+#### H. Localized Mesh Refinement
+
+| Parameter | Type | Default | Units | Description |
+| :--- | :---: | :---: | :---: | :--- |
+| `MESH_REFINEMENT` | `bool` | `no` | — | Enables non-uniform localized grid refinement. |
+| `X_START_REFINEMENT` | `float` | — | $\text{m}$ | Axial coordinate $x_{\text{start}}$ where refinement begins (required if `MESH_REFINEMENT = yes`). |
+| `X_END_REFINEMENT` | `float` | — | $\text{m}$ | Axial coordinate $x_{\text{end}}$ where refinement ends (required if `MESH_REFINEMENT = yes`). |
+| `NUMBER_POINTS_REFINEMENT`| `int` | — | — | Number of grid cells placed inside $[x_{\text{start}}, x_{\text{end}}]$ (required if `MESH_REFINEMENT = yes`). |
+| `ADAPT_MESH_REFINEMENT` | `bool` | `no` | — | Smoothly stretches cell dimensions near refinement boundaries to eliminate sharp grid metrics discontinuities. |
+
+---
+
+### 3. Fluid & Thermodynamic Configuration (`[FLUID]`)
+
+The `[FLUID]` section specifies the working medium, equation of state, and acceleration tables.
+
+#### A. Fluid Selection & Equation of State
+
+| Parameter | Type | Default | Units | Description |
+| :--- | :---: | :---: | :---: | :--- |
+| `FLUID_NAME` | `string` | **Required** | — | Fluid identifier corresponding to the CoolProp database (e.g., `'air'`, `'CO2'`, `'N2'`, `'MDM'`, `'MM'`, `'water'`). |
+| `FLUID_MODEL` | `string` | **Required** | — | Thermodynamic model: `'ideal'` (caloric and thermal ideal gas $p = \rho R T$) or `'real'` (multi-parameter Helmholtz energy EOS). |
+| `FLUID_GAMMA` | `float` | `1.4` | — | Ratio of specific heats $\gamma = c_p / c_v$ (used when `FLUID_MODEL = ideal`). |
+| `GAS_R_CONSTANT`| `float` | `287.05` | $\text{J/(kg K)}$| Specific gas constant $R = R_u / M$ (used when `FLUID_MODEL = ideal`). |
+| `FLUID_LIBRARY` | `string` | `'CoolProp'` | — | Thermodynamic backend library for real fluids (`'CoolProp'` standard; `'RefProp'`, `'StanMix'`, `'PCP-SAFT'` if available). |
+
+#### B. 2D Look-Up Table (LuT) Real-Gas Acceleration
+
+Evaluating real-gas Helmholtz equations of state at every finite-volume interface is computationally demanding. Enabling the 2D Look-Up Table constructs a bicubic spline table on $(\log_{10} P, T)$ for fast vectorized state recovery ($3.7\times$ speedup):
+
+> [!NOTE]
+> Look-Up Table parameters can be placed either under `[FLUID]` or under `[SIMULATION]`.
+
+| Parameter | Type | Default | Units | Description |
+| :--- | :---: | :---: | :---: | :--- |
+| `USE_LUT` | `bool` | `no` | — | Activates 2D Bicubic Spline Look-Up Table acceleration for real-gas calculations. |
+| `LUT_PRESSURE_MIN` | `float` | Auto* | $\text{Pa}$ | Minimum pressure bound of the table (*default: $0.5 \times \min(p_L, p_R)$). |
+| `LUT_PRESSURE_MAX` | `float` | Auto* | $\text{Pa}$ | Maximum pressure bound of the table (*default: $1.5 \times \max(p_L, p_R)$). |
+| `LUT_TEMPERATURE_MIN`| `float` | Auto* | $\text{K}$ | Minimum temperature bound of the table (*default: $0.7 \times \min(T_L, T_R)$). |
+| `LUT_TEMPERATURE_MAX`| `float` | Auto* | $\text{K}$ | Maximum temperature bound of the table (*default: $1.3 \times \max(T_L, T_R)$). |
+| `LUT_GRID_SIZE` | `int, int`| `250, 250` | — | Grid resolution $(n_P, n_T)$ for the spline table (clipped between $20 \times 20$ and $1000 \times 1000$). |
+
+---
+
+### 4. Output & Post-Processing Configuration (`[OUTPUT]`)
+
+The `[OUTPUT]` section defines destination directories, file prefixes, snapshot frequency, and runtime visualization.
+
+| Parameter | Type | Default | Description |
+| :--- | :---: | :---: | :--- |
+| `FOLDER_NAME` | `string` | `'Results'` | Directory where solution snapshots, logs, and final assembled `Results.pik` are stored. |
+| `FILE_NAME` | `string` | `'SimulationRun'` | Base prefix for exported solution files (final output named `<FILE_NAME>_NX_<NUMBER_POINTS>`). |
+| `OUTPUT_FREQUENCY` | `int` | `250` | Iteration interval $N_{\text{step}}$ at which transient flow fields are dumped to disk. |
+| `SHOW_ANIMATION` | `bool` | `no` | If `yes` or `true`, displays a live Matplotlib animation of primitive profiles during solver execution. |
 
 ---
 

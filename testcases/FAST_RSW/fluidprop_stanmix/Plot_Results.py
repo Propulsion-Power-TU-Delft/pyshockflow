@@ -29,6 +29,8 @@ rhoL, rhoR = 188.19, 127.27
 uL, uR = 0.0, 16.78
 pL, pR = 9.122E5, 8.017E5
 
+insetwidth = 35
+insetheight = 35
 
 datas = []
 for inputPkl in inputPkls:    
@@ -59,7 +61,7 @@ for i in range(len(x_analytical)):
 
 
 set_thesis_style()
-fig, axes = create_figure(fraction=1, aspect_ratio=1.0, subplots=(1, 3), is_print=False)
+fig, axes = create_figure(fraction=1, aspect_ratio=0.9, subplots=(1, 3), is_print=False)
 (ax1, ax2, ax3) = axes
 
 # --- Density ---
@@ -71,7 +73,7 @@ ax1.set_ylabel(r'$\rho$ [kg/m$^3$]')
 fig.legend(loc='outside upper center', ncol=len(labels)+2)
 
 # --- Zoomed-in view ---
-axins = inset_axes(ax1, width="30%", height="30%", loc="upper right")
+axins = inset_axes(ax1, width="35%", height="35%", loc="upper right")
 axins.plot(x_analytical, rho_analytical,
            linestyle='-')
 for data, ls in zip(datas, linestyles):
@@ -90,14 +92,11 @@ ax2.set_xlabel(r'$x$ [m]')
 ax2.set_ylabel(r'$u$ [m/s]')
 
 # --- Zoomed-in view ---
-axins = inset_axes(
-    ax2,
-    width="30%",
-    height="30%",
-    bbox_to_anchor=(0.2, 0.05, 1.0, 1.0),
-    bbox_transform=ax2.transAxes,
-    loc="center"
+axins = ax2.inset_axes(
+    [0.55, 0.2, 0.35, 0.35],
+    transform=ax2.transAxes
 )
+
 axins.plot(x_analytical, u_analytical, linestyle='-')
 for data, ls in zip(datas, linestyles):
     axins.plot(data['X Coords'], data['Primitive']['Velocity'][:, -1], ls)
@@ -115,14 +114,11 @@ ax3.set_xlabel(r'$x$ [m]')
 ax3.set_ylabel(r'$p$ [bar]')
 
 # --- Zoomed-in view ---
-axins = inset_axes(
-    ax3,
-    width="30%",
-    height="30%",
-    bbox_to_anchor=(0.2, 0.05, 1.0, 1.0),
-    bbox_transform=ax3.transAxes,
-    loc="center"
+axins = ax3.inset_axes(
+    [0.55, 0.4, 0.35, 0.35],
+    transform=ax3.transAxes
 )
+
 axins.plot(x_analytical, p_analytical/1E5, linestyle='-')
 for data, ls in zip(datas, linestyles):
     axins.plot(data['X Coords'], data['Primitive']['Pressure'][:, -1] / 1e5, ls)
