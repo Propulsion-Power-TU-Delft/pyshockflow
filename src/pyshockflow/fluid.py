@@ -1,7 +1,7 @@
 import CoolProp.CoolProp as CP
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.optimize import fsolve
+from scipy.optimize import fsolve, brentq
 import sys
 import fluid_properties.fluid_properties as FP
 
@@ -83,6 +83,66 @@ class FluidIdeal():
         velocity = mach*soundSpeed*direction
         energy = self.computeStaticEnergy_p_rho(pressure, density)
         return density, velocity, energy
+
+    def computeInletFromRiemannInvariant(self, u_int, p_int, rho_int, totPressure, totTemperature, direction):
+        """
+        Compute inlet state using the upstream-running Riemann invariant coupled with
+        isentropic total conditions (totPressure, totTemperature).
+
+        Parameters:
+        -----------
+        u_int : float
+            Velocity in adjacent internal domain cell [m/s].
+        p_int : float
+            Static pressure in adjacent internal domain cell [Pa].
+        rho_int : float
+            Density in adjacent internal domain cell [kg/m^3].
+        totPressure : float
+            Prescribed inlet total pressure [Pa].
+        totTemperature : float
+            Prescribed inlet total temperature [K].
+        direction : float or int
+            Inflow direction sign (+1: entering domain to the right, -1: entering domain to the left).
+
+        Returns:
+        --------
+        density, velocity, pressure, energy
+        """
+        a_int = self.computeSoundSpeed_p_rho(p_int, rho_int)
+        d = float(direction)
+        gm1 = self.gmma - 1.0
+        gp1 = self.gmma + 1.0
+
+        # Upstream-running Riemann invariant from domain interior
+        # Inward velocity is v = d * u.
+        # Along characteristic moving against inflow towards boundary (speed a - v),
+        # invariant is J_up = v_int - 2*a_int/(gamma - 1).
+        J_up = d * u_int - 2.0 * a_int / gm1
+
+        # Total sound speed squared: a_t^2 = gamma * R * T_t = a_b^2 + ((gamma - 1)/2) * v_b^2
+        a_t2 = self.gmma * self.Rgas * totTemperature
+
+        # Substitute v_b = J_up + 2*a_b/(gamma - 1) into energy equation:
+        # A * a_b^2 + B * a_b + C = 0
+        A = gp1 / gm1
+        B = 2.0 * J_up
+        C = 0.5 * gm1 * (J_up ** 2) - a_t2
+
+        disc = max(0.0, B ** 2 - 4.0 * A * C)
+        a_b = (-B + np.sqrt(disc)) / (2.0 * A)
+
+        # Inward velocity and physical velocity
+        v_b = J_up + 2.0 * a_b / gm1
+        v_b = max(0.0, v_b)  # prevent unphysical backflow at inlet
+        u_b = d * v_b
+
+        # Isentropic state from total conditions
+        T_b = (a_b ** 2) / (self.gmma * self.Rgas)
+        p_b = totPressure * ((T_b / totTemperature) ** (self.gmma / gm1))
+        rho_b = p_b / (self.Rgas * T_b)
+        energy_b = self.computeStaticEnergy_p_rho(p_b, rho_b)
+
+        return rho_b, u_b, p_b, energy_b
 
     def compute_gammapv_p_rho(self, p, rho):
         if isinstance(p, np.ndarray):
@@ -671,6 +731,90 @@ class FluidReal():
         velocity = direction * mach * soundSpeed
         energy = self.computeStaticEnergy_p_rho(pressure, density)
         return density, velocity, energy
+
+    def computeInletFromRiemannInvariant(self, u_int, p_int, rho_int, totPressure, totTemperature, direction):
+        """
+        Compute inlet state for real gas flows using the upstream-running Riemann invariant
+        coupled with isentropic total conditions (totPressure, totTemperature) and exact
+        conservation of total enthalpy.
+
+        Parameters:
+        -----------
+        u_int : float
+            Velocity in adjacent internal domain cell [m/s].
+        p_int : float
+            Static pressure in adjacent internal domain cell [Pa].
+        rho_int : float
+            Density in adjacent internal domain cell [kg/m^3].
+        totPressure : float
+            Prescribed inlet total pressure [Pa].
+        totTemperature : float
+            Prescribed inlet total temperature [K].
+        direction : float or int
+            Inflow direction sign (+1: entering domain to the right, -1: entering domain to the left).
+
+        Returns:
+        --------
+        density, velocity, pressure, energy
+        """
+        d = float(direction)
+        v_int = d * u_int
+        a_int = self.computeSoundSpeed_p_rho(p_int, rho_int)
+        rho_a_int = max(float(rho_int * a_int), 1e-12)
+
+        # Evaluate total state properties
+        import CoolProp
+        if self._backend is not None:
+            try:
+                self._backend.update(CoolProp.PT_INPUTS, float(totPressure), float(totTemperature))
+                s_t = self._backend.smass()
+                h_t = self._backend.hmass()
+            except Exception:
+                s_t = FP.PropsSI('S', 'P', totPressure, 'T', totTemperature, self.fluid)
+                h_t = FP.PropsSI('H', 'P', totPressure, 'T', totTemperature, self.fluid)
+        else:
+            s_t = FP.PropsSI('S', 'P', totPressure, 'T', totTemperature, self.fluid)
+            h_t = FP.PropsSI('H', 'P', totPressure, 'T', totTemperature, self.fluid)
+
+        def _get_state_at_p_s(p_eval):
+            if self._backend is not None:
+                try:
+                    self._backend.update(CoolProp.PSmass_INPUTS, float(p_eval), float(s_t))
+                    return self._backend.hmass(), self._backend.rhomass(), self._backend.umass()
+                except Exception:
+                    pass
+            h_eval = FP.PropsSI('H', 'P', p_eval, 'S', s_t, self.fluid)
+            rho_eval = FP.PropsSI('D', 'P', p_eval, 'S', s_t, self.fluid)
+            e_eval = FP.PropsSI('U', 'P', p_eval, 'S', s_t, self.fluid)
+            return h_eval, rho_eval, e_eval
+
+        # Residual function for boundary static pressure p:
+        # v_energy(p) = sqrt(max(0, 2*(h_t - h(p, s_t))))
+        # v_riemann(p) = v_int + (p - p_int) / (rho_int * a_int)
+        def residual(p_eval):
+            h_eval, _, _ = _get_state_at_p_s(p_eval)
+            v_energy = np.sqrt(max(0.0, 2.0 * (h_t - h_eval)))
+            v_riemann = v_int + (p_eval - p_int) / rho_a_int
+            return v_energy - v_riemann
+
+        p_high = 0.99999 * totPressure
+        p_low = max(0.01 * p_high, min(0.1 * p_int, 0.5 * p_high))
+
+        try:
+            r_high = residual(p_high)
+            r_low = residual(p_low)
+            if r_high * r_low <= 0.0:
+                p_b = brentq(residual, p_low, p_high, xtol=1e-5)
+            else:
+                p_b = min(p_int, 0.99 * totPressure)
+        except Exception:
+            p_b = min(p_int, 0.99 * totPressure)
+
+        h_b, rho_b, e_b = _get_state_at_p_s(p_b)
+        v_b = np.sqrt(max(0.0, 2.0 * (h_t - h_b)))
+        u_b = d * v_b
+
+        return rho_b, u_b, p_b, e_b
 
 
     def compute_gammapv_p_rho(self, p, rho):

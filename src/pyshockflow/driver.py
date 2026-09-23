@@ -538,7 +538,8 @@ class Driver:
     
     def setInletBoundaryConditions(self, location):
         """
-        Set periodic BC
+        Set inlet boundary conditions using the upstream-running Riemann invariant
+        and isentropic total conditions (total pressure and total temperature).
         """
         # handle left and right extremities with the same code
         if location=='right':
@@ -555,11 +556,18 @@ class Driver:
         totalTemperature = inletConditions[1]
         direction = inletConditions[2]
         
-        # static pressure is the only info taken from the domain
-        pressure = self.solutionPrimitive['Pressure'][iInternal]
-        if pressure>=totalPressure: # avoid the problems that can cause
-            pressure = 0.99*totalPressure   
-        density, velocity, energy = self.fluid.computeInletQuantities(pressure, totalPressure, totalTemperature, direction)
+        u_int = self.solutionPrimitive['Velocity'][iInternal]
+        p_int = self.solutionPrimitive['Pressure'][iInternal]
+        rho_int = self.solutionPrimitive['Density'][iInternal]
+
+        if hasattr(self.fluid, 'computeInletFromRiemannInvariant'):
+            density, velocity, pressure, energy = self.fluid.computeInletFromRiemannInvariant(
+                u_int, p_int, rho_int, totalPressure, totalTemperature, direction
+            )
+        else:
+            pressure = min(p_int, 0.99 * totalPressure)
+            density, velocity, energy = self.fluid.computeInletQuantities(pressure, totalPressure, totalTemperature, direction)
+
         self.solutionPrimitive['Density'][iHalo] = density
         self.solutionPrimitive['Velocity'][iHalo] = velocity
         self.solutionPrimitive['Pressure'][iHalo] = pressure

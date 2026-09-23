@@ -130,10 +130,15 @@ class Tank0D:
             T_tank_tot = self.T
 
             try:
-                rho_halo, u_halo, e_halo = fluid.computeInletQuantities(
-                    p_int, p_tank_tot, T_tank_tot, direction
-                )
-                p_halo = p_int
+                if hasattr(fluid, 'computeInletFromRiemannInvariant'):
+                    rho_halo, u_halo, p_halo, e_halo = fluid.computeInletFromRiemannInvariant(
+                        u_int, p_int, rho_int, p_tank_tot, T_tank_tot, direction
+                    )
+                else:
+                    rho_halo, u_halo, e_halo = fluid.computeInletQuantities(
+                        p_int, p_tank_tot, T_tank_tot, direction
+                    )
+                    p_halo = p_int
             except Exception:
                 p_halo = self.p
                 rho_halo = self.rho
